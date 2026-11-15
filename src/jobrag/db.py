@@ -18,6 +18,18 @@ REQUIRED_EXTENSIONS = ("vector",)
 OPTIONAL_EXTENSIONS = ("unaccent", "pg_trgm")
 
 
+def _index_status(cur: psycopg.Cursor) -> dict[str, int] | None:
+    """How much of the corpus is indexed, or None before the schema exists."""
+    try:
+        cur.execute("SELECT count(*) FROM offers")
+        offers = cur.fetchone()[0]
+        cur.execute("SELECT count(*), count(embedding) FROM chunks")
+        chunks, embedded = cur.fetchone()
+    except psycopg.errors.UndefinedTable:
+        return None
+    return {"offers": offers, "chunks": chunks, "embedded": embedded}
+
+
 @contextmanager
 def connection(dsn: str | None = None, *, read_only: bool = False) -> Iterator[psycopg.Connection]:
     """Connect to the JobRAG database (or to `dsn` if given)."""
@@ -41,6 +53,7 @@ def check_database(dsn: str | None = None) -> dict[str, Any]:
             version = row[0] if row else None
             cur.execute("SELECT extname FROM pg_extension WHERE extname = ANY(%s)", (list(wanted),))
             installed = {name for (name,) in cur.fetchall()}
+            index = _index_status(cur)
     except Exception as exc:  # noqa: BLE001 - /health must answer, whatever happens
         message = str(exc).strip()
         first_line = message.splitlines()[0] if message else exc.__class__.__name__
@@ -48,11 +61,13 @@ def check_database(dsn: str | None = None) -> dict[str, Any]:
             "reachable": False,
             "server_version": None,
             "extensions": dict.fromkeys(wanted, False),
+            "index": None,
             "error": f"{exc.__class__.__name__}: {first_line}"[:300],
         }
     return {
         "reachable": True,
         "server_version": version,
         "extensions": {name: name in installed for name in wanted},
+        "index": index,
         "error": None,
     }

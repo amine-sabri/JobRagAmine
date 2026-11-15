@@ -1,4 +1,11 @@
 # Runtime dependencies. Compile with: make lock
+#
+# torch and sentence-transformers are NOT pinned here on purpose: on Linux the
+# default PyPI torch wheel pulls ~2.5 GB of CUDA packages, useless on a machine
+# with no GPU. Install the CPU build explicitly (see `make models`):
+#   pip install --index-url https://download.pytorch.org/whl/cpu torch
+#   pip install sentence-transformers
+# Installed and verified here: torch 2.15.0+cpu, sentence-transformers 6.3.0.
 fastapi
 uvicorn[standard]
 psycopg[binary]

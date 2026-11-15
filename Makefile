@@ -22,6 +22,19 @@ install: $(VENV)/bin/activate ## Create the venv and install pinned dependencies
 	$(PIP) install -e . --no-deps
 	$(VENV)/bin/pre-commit install
 
+.PHONY: models
+models: $(VENV)/bin/activate ## Install the CPU-only torch build + sentence-transformers
+	$(PIP) install --index-url https://download.pytorch.org/whl/cpu torch
+	$(PIP) install sentence-transformers
+
+.PHONY: schema
+schema: ## Create the offers/chunks tables in the JobRAG database
+	$(PY) scripts/init_db.py
+
+.PHONY: index
+index: ## Embed data/chunks.jsonl into pgvector (resumable)
+	$(PY) scripts/build_index.py
+
 .PHONY: lock
 lock: $(VENV)/bin/activate ## Recompile requirements*.txt from requirements*.in
 	$(PIP) install --quiet pip-tools

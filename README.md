@@ -46,6 +46,9 @@ cp .env.example .env          # then set JOBRAG_DB_PASSWORD and JOBRAG_DB_DSN
 make install                  # venv + pinned dependencies + pre-commit hook
 make up                       # pgvector container, waits until healthy
 make data                      # read-only export + corpus statistics + anonymised sample
+make models                    # CPU-only torch + sentence-transformers (~2 GB, no GPU needed)
+make schema                    # offers/chunks tables, HNSW + French full-text indexes
+make index                     # embed the chunks (resumable)
 make test                     # unit tests, no database needed
 make test-all                 # + the tests that need the container
 make api                      # http://127.0.0.1:8010
