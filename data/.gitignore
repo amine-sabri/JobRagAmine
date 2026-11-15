@@ -1,0 +1,5 @@
+# The exported snapshot is private data: never committed.
+# Only the small anonymised sample used by the tests is tracked.
+*
+!.gitignore
+!sample_offers.jsonl

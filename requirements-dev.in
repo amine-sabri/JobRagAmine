@@ -1,0 +1,7 @@
+# Dev dependencies (includes the runtime ones). Compile with: make lock
+-r requirements.in
+pytest
+httpx           # required by fastapi.testclient
+ruff
+pre-commit
+pip-tools

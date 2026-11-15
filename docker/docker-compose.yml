@@ -1,0 +1,27 @@
+name: jobrag
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: jobrag-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: jobrag
+      POSTGRES_USER: jobrag
+      POSTGRES_PASSWORD: ${JOBRAG_DB_PASSWORD:?set JOBRAG_DB_PASSWORD in .env}
+    # Bound to localhost only, on a port that clashes with neither the host
+    # Postgres (5432) nor the JobCrusader dev database (55432).
+    ports:
+      - "127.0.0.1:55433:5432"
+    volumes:
+      - jobrag_pgdata:/var/lib/postgresql/data
+      - ./init:/docker-entrypoint-initdb.d:ro
+    shm_size: 256mb
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jobrag -d jobrag"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+volumes:
+  jobrag_pgdata:
