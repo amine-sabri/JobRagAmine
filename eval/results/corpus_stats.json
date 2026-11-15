@@ -1,0 +1,192 @@
+{
+  "command": "python scripts/corpus_stats.py",
+  "total_rows": 32013,
+  "canonical": 23715,
+  "duplicate_copies": 8298,
+  "truncated_rows": 20186,
+  "indexable_full_text": 9089,
+  "distinct_companies": 6228,
+  "distinct_cities": 2183,
+  "posted_at_range": [
+    "2017-11-15",
+    "2026-11-15"
+  ],
+  "masked": {
+    "emails": 186,
+    "phones": 9
+  },
+  "length_full_text": {
+    "min": 18,
+    "p25": 1524,
+    "p50": 2379,
+    "p75": 3475,
+    "p95": 4782,
+    "max": 17859,
+    "mean": 2554
+  },
+  "length_truncated": {
+    "min": 393,
+    "p25": 500,
+    "p50": 500,
+    "p75": 500,
+    "p95": 500,
+    "max": 9125,
+    "mean": 616
+  },
+  "by_source": {
+    "adzuna": {
+      "offers": 19874,
+      "canonical": 14361,
+      "truncated": 19719,
+      "chars": 9921288
+    },
+    "france-travail": {
+      "offers": 11774,
+      "canonical": 9007,
+      "truncated": 465,
+      "chars": 30081931
+    },
+    "unknown": {
+      "offers": 3,
+      "canonical": 3,
+      "truncated": 0,
+      "chars": 14391
+    },
+    "welcome-to-the-jungle": {
+      "offers": 5,
+      "canonical": 4,
+      "truncated": 0,
+      "chars": 2974
+    },
+    "abg": {
+      "offers": 4,
+      "canonical": 4,
+      "truncated": 0,
+      "chars": 21242
+    },
+    "euraxess": {
+      "offers": 100,
+      "canonical": 100,
+      "truncated": 2,
+      "chars": 678496
+    },
+    "recruitee": {
+      "offers": 89,
+      "canonical": 85,
+      "truncated": 0,
+      "chars": 304133
+    },
+    "ashby": {
+      "offers": 55,
+      "canonical": 46,
+      "truncated": 0,
+      "chars": 471856
+    },
+    "greenhouse": {
+      "offers": 108,
+      "canonical": 104,
+      "truncated": 0,
+      "chars": 589219
+    },
+    "smartrecruiters": {
+      "offers": 1,
+      "canonical": 1,
+      "truncated": 0,
+      "chars": 3217
+    }
+  },
+  "by_contract": {
+    "non précisé": 7064,
+    "freelance": 1392,
+    "CDI": 11648,
+    "CDD": 2539,
+    "intérim": 968,
+    "doctorat": 104
+  },
+  "by_language": {
+    "fr": 22078,
+    "en": 1637
+  },
+  "by_status_raw": {
+    "2": 17289,
+    "1": 4822,
+    "4": 287,
+    "3": 1215,
+    "5": 102
+  },
+  "by_level_raw": {
+    "3": 16416,
+    "4": 6131,
+    "2": 285,
+    "1": 883
+  },
+  "coverage": {
+    "city": 23707,
+    "salary": 10571,
+    "remote": 95,
+    "intermediary": 109,
+    "posted_at": 23628
+  },
+  "largest_duplicate_groups": [
+    {
+      "size": 82,
+      "title": "Agent commercial / Agente commerciale en immobilier (H/F)",
+      "company": "MEGAGENCE",
+      "cities": 82
+    },
+    {
+      "size": 73,
+      "title": "Ingénieur Systèmes d'Informations Industriels H/F (CDI)",
+      "company": "THALES SA",
+      "cities": 22
+    },
+    {
+      "size": 71,
+      "title": "Développeur web fullstack (H/F)",
+      "company": "LEIHIA",
+      "cities": 71
+    },
+    {
+      "size": 66,
+      "title": "Développeur web fullstack H/F",
+      "company": "Crédit Agricole",
+      "cities": 66
+    },
+    {
+      "size": 57,
+      "title": "Ingénieur Développement Logiciels Embarqués F/H",
+      "company": "Thales",
+      "cities": 7
+    },
+    {
+      "size": 54,
+      "title": "Employé Polyvalent (F/H)",
+      "company": "Entreprise non communiquée",
+      "cities": 54
+    },
+    {
+      "size": 50,
+      "title": "Développeur IAM - C# & API - (H/F)",
+      "company": "KLANIK",
+      "cities": 21
+    },
+    {
+      "size": 50,
+      "title": "Conseiller de clientèle particuliers en agence bancaire (H/F)",
+      "company": "LEIHIA",
+      "cities": 48
+    },
+    {
+      "size": 49,
+      "title": "Développeur Python - Défense & Sécurité - Ile-De-France H/F",
+      "company": "Sopra Steria",
+      "cities": 31
+    },
+    {
+      "size": 48,
+      "title": "Ingénieur d'affaires - IA H/F",
+      "company": "Team.Is",
+      "cities": 27
+    }
+  ]
+}

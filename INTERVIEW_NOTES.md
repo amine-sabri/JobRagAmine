@@ -64,3 +64,72 @@ Reachability, server version, and the presence of `pgvector` — a reachable dat
 extension would fail at index-build time, which is too late. It returns 503 in that case so a
 Compose healthcheck, a CI step or a probe can act on the status code; the body carries the detail
 for a human, with the password masked.
+
+## Phase 1 — read-only export, cleaning, deduplication
+
+### What the data actually looks like
+
+The brief's column list was close but not exact: `Id` is a `uuid`, `Language` is an integer enum
+(not text), and the table carries contact and CV-matching columns the export must leave behind.
+Checked with `\d "JobOffers"` before writing any code. Measured facts that changed decisions:
+
+| Fact | How it was measured | What it changed |
+| --- | --- | --- |
+| 63% of descriptions are truncated (Adzuna: 18,915 of 19,874 are *exactly* 500 chars, 19,719 end in an ellipsis) | `count(*) filter (where length("Description") = 500)` grouped by `Source` | the usable corpus is 9,089 full-text canonical offers, not 32,013; truncation is a flag, not a silent loss |
+| `Language` 0 = French, 1 = English | stopword counts per value: 29,856/29,942 vs 2,026/2,071 | no guessing; `language_code` is derived, not invented |
+| `ContractType` 0 exists (10,096 offers); 3 and 4 never occur; 7 (104) = euraxess + abg exactly | `group by "ContractType"`, cross-checked against `Source` | 0 is "non précisé"; the rest of the brief's enum is confirmed |
+| `Status` and `Level` meanings unknown | `Status` 1 has mean `BestScore` 64 and 100% scored, `Status` 2 has mean 21 | kept as raw integers; nothing in the pipeline depends on a guessed label |
+| Section headings in only 47% of full-text offers | regex for `^(missions?|profil|compétences?|…)` | phase 2 needs a size-based fallback, not just section splitting |
+
+### Decisions
+
+| Decision | Why | Alternative rejected |
+| --- | --- | --- |
+| Explicit 22-column allow-list, 11 columns excluded | `SELECT *` means a contact column added upstream silently enters the export. The allow-list fails closed | `select *` then dropping fields in Python |
+| `ApplyEmail`, `ContactName`, `ApplyUrl` excluded — and `BestScore`, `BestCvProfileId` too | the first three are contact details; the last two are the platform's CV-matching scores, which describe the candidate, not the offer | exporting them "just in case" |
+| Masking *before* every other transform | an e-mail must not survive because a later step reshaped the text around it | masking at indexing time |
+| Keep duplicates, flag them with `duplicate_of` | a position posted in 82 cities is one job, but "in which cities?" is a real question; the canonical row keeps `duplicate_cities` | deleting copies, losing the cities |
+| Union-find over two rules | the rules chain: A links x–y by text, B links y–z by title. Independent passes would produce two groups for one position | one rule only, or two independent groupings |
+| Canonical = oldest row, id as tie-break | the choice must be identical across runs, or the index and the evaluation drift apart | first row seen (depends on `ORDER BY` and on luck) |
+| Phone regex requires a *consistent* separator | without it, `02.190606-04` inside the ISO timestamp `2026-10-10T01:16:02.190606-04:00` was masked as a phone number. Re-running the export after the fix moved the count from 11 to 9: two of the eleven "phones" were timestamps | a looser regex, corrupting real text |
+| Truncation detected on the *raw* description, before cleaning | whitespace normalisation can remove the trailing ellipsis that proves the cut | detecting it afterwards |
+| `build_offer` lives in `src/jobrag/export.py`, not in the script | the privacy rules are the part that most needs tests; a function inside a CLI script is awkward to test | leaving it in `scripts/` |
+| Committed sample is pseudonymised *and* self-checking | the script refuses to write a sample containing an e-mail, a phone number or a real company name (it caught two leaks: company names in titles, and company-owned URL hosts such as `protectic.fr`) | a hand-picked sample, trusted |
+
+### Verified, not assumed
+
+`make test-all` → **119 passed** (114 without a database). The read-only guarantee is a test:
+`CREATE TABLE` raises `ReadOnlySqlTransaction`, `transaction_read_only` is `on`, and the role sees
+exactly one table. The export of 32,013 offers takes **14 s** and masks 186 e-mails and 9 phone
+numbers; 8,298 copies are flagged across 4,040 duplicate groups, the largest being one position at
+MEGAGENCE posted in 82 cities.
+
+### Questions an interviewer could ask
+
+**"63% of your descriptions are truncated. Why not just drop them?"**
+Because they still answer a whole class of questions: which company, which city, which contract
+type, which salary, and the title itself. What they cannot support is "what does this offer
+require?", so they are flagged rather than deleted, and the flag is what the generation step uses
+to decide whether it may claim anything about requirements. Dropping them would also skew any
+aggregation over the market ("how many CDI in Lille?") by two thirds of the data.
+
+**"Why keep duplicates at all? Most pipelines deduplicate and move on."**
+Because the duplicate *is* information here. One position posted in 82 cities is one job, so the
+index must not return 82 chunks of the same text and crowd out everything else — but "where is
+this job open?" is exactly what a candidate asks. Keeping the copies with `duplicate_of` lets
+retrieval work on canonical rows while the canonical row still carries the 82 cities. It also
+makes the deduplication auditable: I can read the largest groups and see whether the rules merged
+things they should not have.
+
+**"How do you know your masking works?"**
+Three ways, none of which is "I read the regex". The export counts what it masked per offer, so
+the total is visible on every run. The committed sample is validated by a script that refuses to
+write if an e-mail or phone pattern survives — it caught real leaks the first time. And the unit
+tests include the cases that *must not* be masked: ISO timestamps, SIRET numbers, salary ranges,
+version numbers. That last group is where the bug was: the first regex masked part of a timestamp.
+
+**"Your canonical row is the oldest. Does that matter?"**
+It matters for reproducibility more than for quality: any deterministic rule would do, but a
+non-deterministic one (first row returned by the database) would make the index, and therefore the
+retrieval metrics, change between runs for no reason. Oldest-first also matches the intuition that
+the first posting is the original and the re-posts are copies.

@@ -44,6 +44,21 @@ logs: ## Tail the database logs
 psql: ## Open a psql shell on the JobRAG database
 	$(COMPOSE) exec db psql -U jobrag -d jobrag
 
+.PHONY: export
+export: ## Export the source platform to data/offers.jsonl (read-only)
+	$(PY) scripts/export_offers.py
+
+.PHONY: stats
+stats: ## Describe the corpus and inject the tables into README.md
+	$(PY) scripts/corpus_stats.py
+
+.PHONY: sample
+sample: ## Rebuild the committed anonymised sample (50 offers)
+	$(PY) scripts/make_sample.py
+
+.PHONY: data
+data: export stats sample ## Export, describe and re-sample in one go
+
 .PHONY: test
 test: ## Run the unit tests (no database needed)
 	$(PY) -m pytest
