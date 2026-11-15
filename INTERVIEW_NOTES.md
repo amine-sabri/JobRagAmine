@@ -133,3 +133,56 @@ It matters for reproducibility more than for quality: any deterministic rule wou
 non-deterministic one (first row returned by the database) would make the index, and therefore the
 retrieval metrics, change between runs for no reason. Oldest-first also matches the intuition that
 the first posting is the original and the re-posts are copies.
+
+## Phase 2a — chunking
+
+### Decisions
+
+| Decision | Why | Alternative rejected |
+| --- | --- | --- |
+| Hard character budget, header and overlap included | e5-base truncates past 512 tokens **silently**: a 3,500-character offer would lose two thirds of itself with no error anywhere. A test asserts `n_chars <= max_chars` for every configuration | counting tokens at embedding time and hoping |
+| Every chunk starts with `title · company · city · contract` | the chunk is what retrieval returns and what the LLM reads. "3 ans d'expérience exigés" is unusable without knowing which offer it belongs to, and citations become guesswork | storing the metadata only in the database and joining at display time |
+| `non précisé` left out of the header | it was being stamped onto the chunks of 7,068 offers: noise in the embedding, and a token that would skew the BM25 scoring of phase 5 | including every field for consistency |
+| Headings dropped from the chunk body | the label already carries the information; repeating "Missions :" wastes budget | keeping the heading line in the text |
+| Section split, then paragraph, then sentence, then hard cut | only 47% of full-text offers have a usable heading (measured), so section splitting is an optimisation, not the mechanism | section splitting only — it would fail on half the corpus |
+| A tiny last chunk is grown by taking atoms back from the previous one | a 40-character trailing chunk ("TR.") retrieves badly and reads worse | emitting it as-is, or dropping it and losing text |
+| An empty description still yields one header-only chunk | the offer stays findable by title, company and city — exactly what a truncated offer can honestly answer | skipping the offer, making it invisible |
+| Copies are not chunked (23,715 of 32,013 offers) | one position posted in 82 cities would otherwise occupy 82 slots in the top-k and crowd out everything else | chunking every row |
+
+### The estimate was wrong, and why
+
+I predicted ~36,000 chunks at `max_chars=1200, overlap=150`; the real figure is **51,321**. Two
+mistakes: I reasoned from the *mean* description length instead of summing the real ones, and I
+ignored the overhead — the header (~90 characters) plus the overlap (150) leave a real step of
+~960 characters per window, not 1,050. Checked afterwards that section boundaries were not the
+cause: raising `min_chars` from 200 to 600 only moves the total from 51,321 to 49,604.
+
+| config | chunks | chars per chunk (p50 / p95) | chunks per offer (mean) |
+| --- | --- | --- | --- |
+| 1200 / 150 (chosen) | 51,321 | 749 / 1,175 | 2.2 |
+| 1200 / 150, min 600 | 49,604 | 823 / 1,173 | 2.1 |
+| 2000 / 200 | 38,348 | 742 / 1,891 | 1.6 |
+
+The median chunk (749 characters) sits well under the budget because a third of all chunks come
+from offers the source board truncated at 500 characters.
+
+### Questions an interviewer could ask
+
+**"Why not one vector per offer?"**
+Two reasons. Anything past 512 tokens is silently dropped, so most of a 3,500-character offer would
+never be indexed. And a single vector averaging missions, benefits and legal boilerplate matches
+every query weakly — chunk-level retrieval returns the passage that actually answers, which is
+also what makes a citation checkable.
+
+**"Why put the title and company inside every chunk?"**
+Because the chunk travels alone. Retrieval returns a passage and the prompt shows that passage; if
+it only says "3 ans d'expérience exigés", neither the model nor the reader can attribute it. The
+header also helps retrieval: a question naming a city or a contract type now matches text that is
+really in the chunk, not only metadata sitting in another column.
+
+**"Your chunks are 749 characters at the median but you configured 1,200. Is the configuration wrong?"**
+No — the distribution is bimodal and the median sits in the lower mode: 33% of chunks come from
+offers truncated at 500 characters by the source board, one short chunk each. Among full-text
+offers the mean is 3.8 chunks of ~1,000 characters. It does mean the phase-5 comparison between
+1,200 and 2,000 characters is really a comparison over the full-text half of the corpus, which is
+worth saying out loud when I report it.

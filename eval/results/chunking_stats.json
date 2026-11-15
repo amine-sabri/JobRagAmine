@@ -1,0 +1,39 @@
+{
+  "command": "python scripts/build_chunks.py --max-chars 1200 --overlap 150",
+  "max_chars": 1200,
+  "overlap": 150,
+  "min_chars": 200,
+  "offers_chunked": 23715,
+  "duplicate_offers_skipped": 8298,
+  "truncated_offers": 14626,
+  "chunks": 51321,
+  "chunks_per_offer": {
+    "min": 1,
+    "p50": 1,
+    "p75": 3,
+    "p95": 6,
+    "max": 23,
+    "mean": 2.2
+  },
+  "chunk_chars": {
+    "min": 57,
+    "p50": 749,
+    "p75": 1023,
+    "p95": 1175,
+    "max": 1199,
+    "mean": 788.6
+  },
+  "chunks_with_a_section": 12508,
+  "sections": {
+    "(aucune)": 38813,
+    "missions": 5651,
+    "profil": 4268,
+    "competences": 1586,
+    "avantages": 492,
+    "experience": 238,
+    "entreprise": 151,
+    "processus": 122
+  },
+  "truncated_chunks": 16863,
+  "seconds": 4.9
+}

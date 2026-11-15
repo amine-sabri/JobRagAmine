@@ -56,8 +56,12 @@ stats: ## Describe the corpus and inject the tables into README.md
 sample: ## Rebuild the committed anonymised sample (50 offers)
 	$(PY) scripts/make_sample.py
 
+.PHONY: chunks
+chunks: ## Chunk the canonical offers into data/chunks.jsonl
+	$(PY) scripts/build_chunks.py
+
 .PHONY: data
-data: export stats sample ## Export, describe and re-sample in one go
+data: export stats sample chunks ## Export, describe, re-sample and chunk in one go
 
 .PHONY: test
 test: ## Run the unit tests (no database needed)
