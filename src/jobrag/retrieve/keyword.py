@@ -15,6 +15,16 @@ The cost is honest: `ts_rank_cd` is **not** BM25. It weights term frequency and
 proximity but has no document-length saturation, so very long chunks can score
 higher than they deserve. If the phase-5 numbers show that, the comparison
 against `rank_bm25` is the experiment to run.
+
+**Two-stage querying.** `websearch_to_tsquery` ANDs every term, which is right
+for "kubernetes terraform" and useless for a question: *"Quelles offres
+demandent Kubernetes à Paris ?"* requires one chunk to contain `quelles` AND
+`offres` AND `demandent` AND `kubernetes` AND `paris`, and none does — measured,
+it returned zero results. So the strict query runs first, and when it returns
+fewer than k rows the remaining slots are filled from a loose OR query built
+from the question's lexemes. Postgres does the lexemising and drops French
+stopwords itself (`tsvector_to_array(to_tsvector('french', …))`), so no token
+is ever pasted into SQL by hand.
 """
 
 import time
@@ -22,8 +32,17 @@ from typing import Any
 
 from ..db import connection
 
+#: AND semantics: every term must be present. Precise, and empty on questions.
+STRICT_QUERY = "websearch_to_tsquery('french', %(query)s)"
+
+#: OR semantics over the lexemes Postgres extracts, stopwords already removed.
+LOOSE_QUERY = """to_tsquery(
+    'french',
+    nullif(array_to_string(tsvector_to_array(to_tsvector('french', %(query)s)), ' | '), '')
+)"""
+
 SEARCH_SQL = """
-WITH q AS (SELECT websearch_to_tsquery('french', %(query)s) AS tsquery)
+WITH q AS (SELECT {tsquery} AS tsquery)
 SELECT
     c.chunk_id,
     c.offer_id,
@@ -50,7 +69,13 @@ LIMIT %(limit)s
 """
 
 
-def search_chunks(query: str, *, k: int = 5) -> dict[str, Any]:
+def _run(cur, tsquery_sql: str, query: str, limit: int) -> list[dict[str, Any]]:
+    cur.execute(SEARCH_SQL.format(tsquery=tsquery_sql), {"query": query, "limit": limit})
+    columns = [description.name for description in cur.description]
+    return [dict(zip(columns, row, strict=True)) for row in cur.fetchall()]
+
+
+def search_chunks(query: str, *, k: int = 5, strict_only: bool = False) -> dict[str, Any]:
     """Top-k chunks for `query` by French full-text ranking.
 
     Same shape as the vector search, so the two can be fused (phase 5) and
@@ -58,9 +83,19 @@ def search_chunks(query: str, *, k: int = 5) -> dict[str, Any]:
     """
     started = time.perf_counter()
     with connection() as conn, conn.cursor() as cur:
-        cur.execute(SEARCH_SQL, {"query": query, "limit": k})
-        columns = [description.name for description in cur.description]
-        rows = [dict(zip(columns, row, strict=True)) for row in cur.fetchall()]
+        rows = _run(cur, STRICT_QUERY, query, k)
+        mode = "strict"
+        if len(rows) < k and not strict_only:
+            before = len(rows)
+            seen = {row["chunk_id"] for row in rows}
+            for row in _run(cur, LOOSE_QUERY, query, k * 3):
+                if row["chunk_id"] not in seen:
+                    rows.append(row)
+                    seen.add(row["chunk_id"])
+                if len(rows) == k:
+                    break
+            if len(rows) > before:
+                mode = "strict+loose"
     elapsed = time.perf_counter() - started
 
     for row in rows:
@@ -70,6 +105,7 @@ def search_chunks(query: str, *, k: int = 5) -> dict[str, Any]:
     return {
         "query": query,
         "k": k,
-        "results": rows,
+        "query_mode": mode,
+        "results": rows[:k],
         "timing_ms": {"database": round(elapsed * 1000, 1), "total": round(elapsed * 1000, 1)},
     }

@@ -1,0 +1,618 @@
+{
+  "Kubernetes": {
+    "term": "kubernetes",
+    "modes": {
+      "vector": {
+        "ms": 109.4,
+        "contains_term": 5,
+        "top": [
+          {
+            "title": "Ingénieur Développeur DevOps Kubernetes - Cyberdéfense (H/F)",
+            "company": "Skills & Affinity",
+            "city": "Kremlin-Bicêtre",
+            "score": 0.8524
+          },
+          {
+            "title": "Développeur Kubernetes - Golang H/F",
+            "company": "Audensiel Technologies",
+            "city": "Ollioules",
+            "score": 0.8496
+          },
+          {
+            "title": "Ingénieur DevOps et Orchestration Cloud (H/F)",
+            "company": "Entreprise non communiquée",
+            "city": "Noisy-le-Grand",
+            "score": 0.8481
+          }
+        ]
+      },
+      "keyword": {
+        "ms": 42.0,
+        "contains_term": 5,
+        "top": [
+          {
+            "title": "Ingénieur DevOps Expert Kubernetes F/H",
+            "company": "CDC Informatique",
+            "city": "Bagneux",
+            "score": 0.5
+          },
+          {
+            "title": "Ingénieur Plateforme Linux / Kubernetes Secteur Digital (H/F)",
+            "company": "GREY MATTER ENGINEERING",
+            "city": "Valbonne",
+            "score": 0.5
+          },
+          {
+            "title": "Ingénieur Devops Kubernetes F/H",
+            "company": "SHAPE IT",
+            "city": "Paris",
+            "score": 0.5
+          }
+        ]
+      },
+      "hybrid": {
+        "ms": 123.1,
+        "contains_term": 5,
+        "top": [
+          {
+            "title": "Ingénieur Développeur DevOps Kubernetes - Cyberdéfense (H/F)",
+            "company": "Skills & Affinity",
+            "city": "Kremlin-Bicêtre",
+            "score": 0.8524
+          },
+          {
+            "title": "Ingénieur développement Java déploiement applicatif sur Kubernetes H/F",
+            "company": "VIVERIS",
+            "city": "Vitry-sur-Seine",
+            "score": 0.8412
+          },
+          {
+            "title": "Ingénieur Plateforme Linux / Kubernetes Secteur Digital (H/F)",
+            "company": "GREY MATTER ENGINEERING",
+            "city": "Valbonne",
+            "score": 0.8404
+          }
+        ]
+      }
+    }
+  },
+  "FastAPI": {
+    "term": "fastapi",
+    "modes": {
+      "vector": {
+        "ms": 100.1,
+        "contains_term": 5,
+        "top": [
+          {
+            "title": "Développeur FastAPI",
+            "company": "gamme solutions",
+            "city": "Orsay",
+            "score": 0.8531
+          },
+          {
+            "title": "Développeur Python / DevOps – FastAPI & OpenShift H/F (CDI)",
+            "company": "Free-Work",
+            "city": "Saint-Herblain",
+            "score": 0.8522
+          },
+          {
+            "title": "Développeur Python FastAPI IA (H/F) (IT)",
+            "company": "Linkup Partner",
+            "city": "Paris",
+            "score": 0.8522
+          }
+        ]
+      },
+      "keyword": {
+        "ms": 24.2,
+        "contains_term": 5,
+        "top": [
+          {
+            "title": "Développeur Senior - Python FastAPI / Angular - Freelance (H/F)",
+            "company": "Collective.work",
+            "city": "Paris",
+            "score": 0.4
+          },
+          {
+            "title": "Développeur FastAPI",
+            "company": "gamme solutions",
+            "city": "Orsay",
+            "score": 0.4
+          },
+          {
+            "title": "Développeur Web Fullstack Python / FastAPI / VueJS H/F",
+            "company": "Forums Talents Handicap",
+            "city": "Bas-Rhin",
+            "score": 0.3
+          }
+        ]
+      },
+      "hybrid": {
+        "ms": 113.3,
+        "contains_term": 5,
+        "top": [
+          {
+            "title": "Développeur FastAPI",
+            "company": "gamme solutions",
+            "city": "Orsay",
+            "score": 0.8531
+          },
+          {
+            "title": "Développeur Senior - Python FastAPI / Angular - Freelance (H/F)",
+            "company": "Collective.work",
+            "city": "Paris",
+            "score": 0.8461
+          },
+          {
+            "title": "Développeur Python FastAPI IA (H/F) (IT)",
+            "company": "Linkup Partner",
+            "city": "Paris",
+            "score": 0.8522
+          }
+        ]
+      }
+    }
+  },
+  "Terraform": {
+    "term": "terraform",
+    "modes": {
+      "vector": {
+        "ms": 88.3,
+        "contains_term": 5,
+        "top": [
+          {
+            "title": "Expert / Ingénieur Cloud Azure - Terraform et FinOps (H/F)",
+            "company": "Entreprise non communiquée",
+            "city": "Nanterre",
+            "score": 0.8313
+          },
+          {
+            "title": "Expert / Ingénieur Cloud Azure - Terraform et FinOps (H/F)",
+            "company": "Entreprise non communiquée",
+            "city": "Nanterre",
+            "score": 0.8238
+          },
+          {
+            "title": "Senior Security Engineer",
+            "company": "DEEP",
+            "city": "Belgrade",
+            "score": 0.8229
+          }
+        ]
+      },
+      "keyword": {
+        "ms": 56.1,
+        "contains_term": 5,
+        "top": [
+          {
+            "title": "Senior Security Engineer",
+            "company": "DEEP",
+            "city": "Belgrade",
+            "score": 0.4
+          },
+          {
+            "title": "Ingénieur Linux N3 - Freelance (H/F)",
+            "company": "Collective.work",
+            "city": "Lille",
+            "score": 0.4
+          },
+          {
+            "title": "Développeur Python backend et Terraform (IT)",
+            "company": "BEEZEN",
+            "city": "Paris",
+            "score": 0.3
+          }
+        ]
+      },
+      "hybrid": {
+        "ms": 140.7,
+        "contains_term": 5,
+        "top": [
+          {
+            "title": "Senior Security Engineer",
+            "company": "DEEP",
+            "city": "Belgrade",
+            "score": 0.8229
+          },
+          {
+            "title": "Expert / Ingénieur Cloud Azure - Terraform et FinOps (H/F)",
+            "company": "Entreprise non communiquée",
+            "city": "Nanterre",
+            "score": 0.8238
+          },
+          {
+            "title": "Ingénieur Linux N3 - Freelance (H/F)",
+            "company": "Collective.work",
+            "city": "Lille",
+            "score": 0.8138
+          }
+        ]
+      }
+    }
+  },
+  "PyTorch": {
+    "term": "pytorch",
+    "modes": {
+      "vector": {
+        "ms": 88.8,
+        "contains_term": 3,
+        "top": [
+          {
+            "title": "Applied Scientist (Computer Vision)",
+            "company": "Squad",
+            "city": "Kyiv; Lviv; Remote",
+            "score": 0.8312
+          },
+          {
+            "title": "Formateur en machine learning et deep learning (H/F)",
+            "company": "ELVATUS",
+            "city": "TOULOUSE",
+            "score": 0.8111
+          },
+          {
+            "title": "Research Engineer, LLM (H/F)",
+            "company": "OVHai LLM",
+            "city": "Paris 17e Arrondissement",
+            "score": 0.8086
+          }
+        ]
+      },
+      "keyword": {
+        "ms": 22.1,
+        "contains_term": 5,
+        "top": [
+          {
+            "title": "Expert IA  - Freelance (H/F)",
+            "company": "Collective.work",
+            "city": "Paris",
+            "score": 0.2
+          },
+          {
+            "title": "Formateur en machine learning et deep learning (H/F)",
+            "company": "ELVATUS",
+            "city": "TOULOUSE",
+            "score": 0.2
+          },
+          {
+            "title": "IA / ML Engineer (H/F)",
+            "company": "MIRAI",
+            "city": "Levallois-Perret",
+            "score": 0.1
+          }
+        ]
+      },
+      "hybrid": {
+        "ms": 108.4,
+        "contains_term": 5,
+        "top": [
+          {
+            "title": "Formateur en machine learning et deep learning (H/F)",
+            "company": "ELVATUS",
+            "city": "TOULOUSE",
+            "score": 0.8111
+          },
+          {
+            "title": "Ingénieur en Systèmes Embarqués et Logiciels Temps Réel (H/F)",
+            "company": "NEW NET 3D",
+            "city": "Toulouse",
+            "score": 0.7969
+          },
+          {
+            "title": "Applied Scientist (Computer Vision)",
+            "company": "Squad",
+            "city": "Kyiv; Lviv; Remote",
+            "score": 0.8312
+          }
+        ]
+      }
+    }
+  },
+  "Quelles offres demandent Kubernetes à Paris ?": {
+    "term": "kubernetes",
+    "modes": {
+      "vector": {
+        "ms": 108.5,
+        "contains_term": 5,
+        "top": [
+          {
+            "title": "Senior SRE & DevOps - Kubernetes Expert (Paris)",
+            "company": "EasyPartner",
+            "city": "Paris",
+            "score": 0.8654
+          },
+          {
+            "title": "Ingénieur Développement Kubernetes H/F",
+            "company": "ITS Group",
+            "city": "Paris",
+            "score": 0.8629
+          },
+          {
+            "title": "DevOps Engineer",
+            "company": "Talantir",
+            "city": "Paris",
+            "score": 0.8565
+          }
+        ]
+      },
+      "keyword": {
+        "ms": 264.4,
+        "contains_term": 1,
+        "top": [
+          {
+            "title": "Responsable Avant-vente Liaisons de données tactiques - Défense et Sécurité - Aix en Provence (H/F)",
+            "company": "Entreprise non communiquée",
+            "city": "Marseille 1er Arrondissement",
+            "score": 0.8
+          },
+          {
+            "title": "Lead IA / Architecte Solution IA - Agence d'experts tech - Paris  - CDI (H/F)",
+            "company": "Collective.work",
+            "city": "Paris",
+            "score": 0.8
+          },
+          {
+            "title": "Consultant Ingénieur Data Scientist (H/F)",
+            "company": "Teamis",
+            "city": "Paris 9e Arrondissement",
+            "score": 0.7
+          }
+        ]
+      },
+      "hybrid": {
+        "ms": 352.9,
+        "contains_term": 4,
+        "top": [
+          {
+            "title": "Senior SRE & DevOps - Kubernetes Expert (Paris)",
+            "company": "EasyPartner",
+            "city": "Paris",
+            "score": 0.8654
+          },
+          {
+            "title": "DevOps Data Platform - Kubernetes & Big Data F/H h/f",
+            "company": "Entreprise non communiquée",
+            "city": "Paris",
+            "score": 0.8458
+          },
+          {
+            "title": "Ingénieur Devops Kubernetes F/H",
+            "company": "SHAPE IT",
+            "city": "Paris",
+            "score": 0.8473
+          }
+        ]
+      }
+    }
+  },
+  "offres pour un profil Python junior": {
+    "term": "python",
+    "modes": {
+      "vector": {
+        "ms": 96.1,
+        "contains_term": 5,
+        "top": [
+          {
+            "title": "Développeur Python - Django Junior H/F",
+            "company": "Hays",
+            "city": "Saint-Cyr-sur-Loire",
+            "score": 0.8792
+          },
+          {
+            "title": "Développeur Python/Django junior F/H",
+            "company": "Hays France",
+            "city": "Tours",
+            "score": 0.8762
+          },
+          {
+            "title": "Développeur Python/Django junior - Énergies renouvelables - Freelance (H/F)",
+            "company": "Collective.work",
+            "city": "Paris",
+            "score": 0.8753
+          }
+        ]
+      },
+      "keyword": {
+        "ms": 203.9,
+        "contains_term": 2,
+        "top": [
+          {
+            "title": "Développeur(se) Python F/H h/f",
+            "company": "Entreprise non communiquée",
+            "city": "Bordeaux",
+            "score": 0.002619
+          },
+          {
+            "title": "Expert Stockage et Sauvegarde (F/H)",
+            "company": "Blue Soft",
+            "city": "Paris 1er Arrondissement",
+            "score": 0.001163
+          },
+          {
+            "title": "Responsable Avant-vente Liaisons de données tactiques - Défense et Sécurité - Aix en Provence (H/F)",
+            "company": "Entreprise non communiquée",
+            "city": "Marseille 1er Arrondissement",
+            "score": 0.8
+          }
+        ]
+      },
+      "hybrid": {
+        "ms": 298.6,
+        "contains_term": 5,
+        "top": [
+          {
+            "title": "Développeur Python 3.9 openshift , jenkins, Jira , Anglais 400 E PAR JOUR (IT)",
+            "company": "BI SOLUTIONS",
+            "city": "Ile-de-France",
+            "score": 0.8628
+          },
+          {
+            "title": "Développeur(se) Python F/H h/f",
+            "company": "Entreprise non communiquée",
+            "city": "Bordeaux",
+            "score": 0.002619
+          },
+          {
+            "title": "Développeur Python - Django Junior H/F",
+            "company": "Hays",
+            "city": "Saint-Cyr-sur-Loire",
+            "score": 0.8792
+          }
+        ]
+      }
+    }
+  },
+  "télétravail complet": {
+    "term": null,
+    "modes": {
+      "vector": {
+        "ms": 92.3,
+        "contains_term": null,
+        "top": [
+          {
+            "title": "Développeur Full Stack Senior (H/F)",
+            "company": "Act Digital France",
+            "city": "Lille",
+            "score": 0.8652
+          },
+          {
+            "title": "DevOps Full Remote (H/F)",
+            "company": "REEL IT",
+            "city": "Montpellier",
+            "score": 0.8644
+          },
+          {
+            "title": "Développeur(se) Full Stack - Energie & Télécom - Nantes (H/F)",
+            "company": "Forums Talents Handicap",
+            "city": "Nantes",
+            "score": 0.863
+          }
+        ]
+      },
+      "keyword": {
+        "ms": 23.2,
+        "contains_term": null,
+        "top": [
+          {
+            "title": "HPC / C++ Software Engineer - Full remote (F/H)",
+            "company": "Externatic",
+            "city": "Toulouse",
+            "score": 0.106439
+          },
+          {
+            "title": "Développeur Coordinateur Transport Solidaire - Hautes-Alpes (28 heures/semaine) (H/F)",
+            "company": "Mobicoop",
+            "city": "Gap",
+            "score": 0.1
+          },
+          {
+            "title": "Développeur Open Policy Agent (OPA) / Rego - Full remote (H/F)",
+            "company": "EFFICIENT SOLUTION",
+            "city": "Marignane",
+            "score": 0.1
+          }
+        ]
+      },
+      "hybrid": {
+        "ms": 119.9,
+        "contains_term": null,
+        "top": [
+          {
+            "title": "HPC / C++ Software Engineer - Full remote (F/H)",
+            "company": "Externatic",
+            "city": "Toulouse",
+            "score": 0.8547
+          },
+          {
+            "title": "Développeur Full Stack Senior (H/F)",
+            "company": "Act Digital France",
+            "city": "Lille",
+            "score": 0.8652
+          },
+          {
+            "title": "Développeur Coordinateur Transport Solidaire - Hautes-Alpes (28 heures/semaine) (H/F)",
+            "company": "Mobicoop",
+            "city": "Gap",
+            "score": 0.1
+          }
+        ]
+      }
+    }
+  },
+  "poste d'ingénieur en intelligence artificielle": {
+    "term": null,
+    "modes": {
+      "vector": {
+        "ms": 258.9,
+        "contains_term": null,
+        "top": [
+          {
+            "title": "Ingénieur en intelligence artificielle (H/F)",
+            "company": "ECONOMIE 80",
+            "city": "ISNEAUVILLE",
+            "score": 0.8979
+          },
+          {
+            "title": "Ingénieur de Recherche en Intelligence Artificielle (H/F)",
+            "company": "Entreprise non communiquée",
+            "city": "Bruz",
+            "score": 0.8927
+          },
+          {
+            "title": "Expert intelligence artificielle (H/F)",
+            "company": "SYNERGIE",
+            "city": "Grenoble",
+            "score": 0.8917
+          }
+        ]
+      },
+      "keyword": {
+        "ms": 25.2,
+        "contains_term": null,
+        "top": [
+          {
+            "title": "Ingénieur de recherche en intelligence artificielle (H/F)",
+            "company": "UNIVERSITE GRENOBLE ALPES",
+            "city": "ST MARTIN D HERES",
+            "score": 0.047631
+          },
+          {
+            "title": "Ingénieur en intelligence artificielle (H/F)",
+            "company": "ECONOMIE 80",
+            "city": "ISNEAUVILLE",
+            "score": 0.039747
+          },
+          {
+            "title": "Ingénieur en Intelligence Artificielle F/H",
+            "company": "France Travail",
+            "city": "Isère",
+            "score": 0.033723
+          }
+        ]
+      },
+      "hybrid": {
+        "ms": 155.0,
+        "contains_term": null,
+        "top": [
+          {
+            "title": "Ingénieur en intelligence artificielle (H/F)",
+            "company": "ECONOMIE 80",
+            "city": "ISNEAUVILLE",
+            "score": 0.8979
+          },
+          {
+            "title": "Expert intelligence artificielle (H/F)",
+            "company": "SYNERGIE",
+            "city": "Grenoble",
+            "score": 0.8917
+          },
+          {
+            "title": "Ingénieur de Recherche en Intelligence Artificielle (H/F)",
+            "company": "Entreprise non communiquée",
+            "city": "Bruz",
+            "score": 0.8927
+          }
+        ]
+      }
+    }
+  }
+}

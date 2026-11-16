@@ -265,3 +265,74 @@ This does not apply to the `aggregation` family ("combien d'offres en CDI à
 Lille ?"), where the answer is a number rather than a set of offers — there,
 the labelled ids are the offers the count is built from, and the count itself
 is what phase 7 checks.
+
+## Phase 3 — the baseline, and a prediction that was wrong
+
+### The claim I made, and what the measurement said
+
+I justified building hybrid retrieval with a confident claim: *"vectors handle
+'un profil Python junior', BM25 handles exact tokens like Kubernetes or
+FastAPI."* Measured on the finished index — for each query, the share of the
+top-5 chunks that literally contain the term:
+
+| query | vector | keyword | hybrid |
+| --- | --- | --- | --- |
+| Kubernetes | 5/5 | 5/5 | 5/5 |
+| FastAPI | 5/5 | 5/5 | 5/5 |
+| Terraform | 5/5 | 5/5 | 5/5 |
+| PyTorch | 3/5 | 5/5 | 5/5 |
+| "Quelles offres demandent Kubernetes à Paris ?" | 5/5 | 1/5 | 4/5 |
+| "offres pour un profil Python junior" | 5/5 | 2/5 | 5/5 |
+
+**Vector search is not weak on exact tokens here.** `multilingual-e5-base`
+returns five genuine Kubernetes chunks for "Kubernetes", and the only crack is
+PyTorch at 3/5. The weak retriever is the keyword one, and on the queries that
+look most like real questions. On this corpus the textbook argument for hybrid
+search does not hold as stated — which is worth more than quietly keeping the
+claim, because phase 5 may well show hybrid *diluting* a strong vector baseline
+rather than improving it. The chunk header probably helps: every chunk starts
+with its job title, so a query naming a technology matches text that is in the
+chunk, not only in some other column.
+
+### The bug the probe found
+
+`websearch_to_tsquery` ANDs every term. *"Quelles offres demandent Kubernetes à
+Paris ?"* therefore required one chunk containing `quelles` AND `offres` AND
+`demandent` AND `kubernetes` AND `paris` — and returned **zero rows**. A
+keyword retriever that answers nothing to a question would have made the
+phase-5 comparison meaningless, and the mocked endpoint tests could never have
+caught it: they never executed the SQL.
+
+The fix is a two-stage query: strict (AND) first, and when it returns fewer
+than k rows the remaining slots are filled from a loose (OR) query built from
+the lexemes Postgres itself extracts. Precision suffers — the loose stage put
+"Responsable Avant-vente Liaisons de données tactiques" at the top of the
+Kubernetes question, because `ts_rank_cd` has no IDF and common words like
+"offres" carry weight. `strict_only=True` keeps the knob available, so phase 5
+can measure whether the fallback helps recall or hurts precision instead of
+assuming.
+
+### The other bug, and why the tests missed it
+
+The first real vector query crashed: `SET LOCAL hnsw.ef_search = %s` — Postgres
+`SET` does not take bound parameters. Every `/search` test mocked the retrieval
+function, so the SQL had never run. There are now integration tests that hit
+the real database with a stub embedder (a fixed 768-dimension vector), which
+exercises the SQL without loading a 1.1 GB model. Mocking the thing you are
+testing tests the mock.
+
+### Questions an interviewer could ask
+
+**"Your hybrid search may not beat your baseline. Was it wasted work?"**
+No, for two reasons. The measurement only exists because both retrievers were
+built and compared, and "we tried it and it did not help on this corpus" is a
+result I can defend. And the keyword side earns its place regardless: it is
+15–100 ms against 90–250 ms for the vector path, it needs no model, and it is
+what `/search?mode=keyword` falls back to when the embedding backend is down.
+
+**"How can you measure retrieval before you have labels?"**
+With a property that does not need them: a query naming an exact technology
+*should* return chunks containing that technology. It is not recall, it cannot
+score a semantic question, and it cannot tell a good Kubernetes offer from a
+bad one — but it caught a retriever returning zero results, which no amount of
+waiting for labelled data would have.

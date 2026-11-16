@@ -61,7 +61,11 @@ def search_chunks(
     embedded = time.perf_counter()
 
     with connection() as conn, conn.cursor() as cur:
-        cur.execute("SET LOCAL hnsw.ef_search = %s", (ef_search,))
+        # SET does not accept bound parameters, so the knob goes through
+        # set_config(..., is_local => true), which does. Interpolating the
+        # value into a SET statement would work too, and would be the kind of
+        # string-built SQL this project should not contain.
+        cur.execute("SELECT set_config('hnsw.ef_search', %s, true)", (str(int(ef_search)),))
         cur.execute(
             SEARCH_SQL,
             {"vector": to_vector_literal(vector), "limit": k},
