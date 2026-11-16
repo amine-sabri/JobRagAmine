@@ -122,7 +122,15 @@ def main() -> int:
         ]
         print(f"{mode:<8} {reports[mode]}", flush=True)
 
-    headers = ["configuration", *[f"recall@{k}" for k in ks], f"mrr@{max(ks)}", "p50 ms", "p95 ms"]
+    largest = max(ks)
+    headers = [
+        "configuration",
+        *[f"recall@{k}" for k in ks],
+        f"hit@{min(5, largest)}",
+        f"mrr@{largest}",
+        "p50 ms",
+        "p95 ms",
+    ]
     rows = []
     for mode in modes:
         report = reports[mode]
@@ -130,11 +138,15 @@ def main() -> int:
             [
                 mode,
                 *[f"{report[f'recall@{k}']:.3f}" for k in ks],
-                f"{report[f'mrr@{max(ks)}']:.3f}",
+                f"{report[f'hit@{min(5, largest)}']:.3f}",
+                f"{report[f'mrr@{largest}']:.3f}",
                 report["latency_ms"].get("p50", "-"),
                 report["latency_ms"].get("p95", "-"),
             ]
         )
+    ceilings = " · ".join(
+        f"recall@{k} ≤ {reports[modes[0]][f'recall_ceiling@{k}']:.3f}" for k in ks
+    )
 
     scored = reports[modes[0]]["questions"]
     skipped = reports[modes[0]]["skipped_no_answer"]
@@ -143,6 +155,10 @@ def main() -> int:
 {scored} labelled questions scored, {skipped} "no answer" questions excluded (they are measured by
 the refusal rate, not by recall). Retrieval depth {args.depth}, HNSW `ef_search={args.ef_search}`,
 RRF `k={args.rrf_k}`. Latency is end to end per question, on CPU.
+
+**Recall is capped by the labels**, because several questions have more relevant offers than there
+are slots: {ceilings}. The `recall_of_ceiling@k` figures in `retrieval.json` give the share of the
+achievable recall that was actually achieved.
 
 {markdown_table(headers, rows)}
 """

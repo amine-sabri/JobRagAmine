@@ -1,45 +1,135 @@
 {
-  "command": "python scripts/eval_retrieval.py --modes keyword --depth 20",
+  "command": "python scripts/eval_retrieval.py --modes vector,keyword,hybrid --depth 20",
   "reports": {
-    "keyword": {
-      "questions": 2,
-      "skipped_no_answer": 1,
-      "recall@1": 0.0,
-      "hit@1": 0.0,
-      "ndcg@1": 0.0,
-      "recall@3": 0.0,
-      "hit@3": 0.0,
-      "ndcg@3": 0.0,
-      "recall@5": 0.0,
-      "hit@5": 0.0,
-      "ndcg@5": 0.0,
-      "recall@10": 0.0,
-      "hit@10": 0.0,
-      "ndcg@10": 0.0,
-      "mrr@10": 0.0,
-      "map@10": 0.0,
+    "vector": {
+      "questions": 11,
+      "skipped_no_answer": 4,
+      "recall@1": 0.1,
+      "recall_ceiling@1": 0.2559,
+      "recall_of_ceiling@1": 0.3908,
+      "hit@1": 0.1818,
+      "ndcg@1": 0.1818,
+      "recall@5": 0.1636,
+      "recall_ceiling@5": 0.6962,
+      "recall_of_ceiling@5": 0.235,
+      "hit@5": 0.5455,
+      "ndcg@5": 0.234,
+      "recall@10": 0.1813,
+      "recall_ceiling@10": 0.9697,
+      "recall_of_ceiling@10": 0.187,
+      "hit@10": 0.6364,
+      "ndcg@10": 0.198,
+      "recall@20": 0.2729,
+      "recall_ceiling@20": 1.0,
+      "recall_of_ceiling@20": 0.2729,
+      "hit@20": 0.8182,
+      "ndcg@20": 0.2332,
+      "mrr@20": 0.3653,
+      "map@20": 0.1435,
       "latency_ms": {
-        "p50": 114.1,
-        "p95": 164.7,
-        "p99": 164.7,
-        "mean": 125.8,
-        "max": 164.7
+        "p50": 115.1,
+        "p95": 243.6,
+        "p99": 243.6,
+        "mean": 126.9,
+        "max": 243.6
+      }
+    },
+    "keyword": {
+      "questions": 11,
+      "skipped_no_answer": 4,
+      "recall@1": 0.1271,
+      "recall_ceiling@1": 0.2559,
+      "recall_of_ceiling@1": 0.4968,
+      "hit@1": 0.7273,
+      "ndcg@1": 0.7273,
+      "recall@5": 0.4331,
+      "recall_ceiling@5": 0.6962,
+      "recall_of_ceiling@5": 0.6221,
+      "hit@5": 0.8182,
+      "ndcg@5": 0.6055,
+      "recall@10": 0.4663,
+      "recall_ceiling@10": 0.9697,
+      "recall_of_ceiling@10": 0.4809,
+      "hit@10": 0.8182,
+      "ndcg@10": 0.5067,
+      "recall@20": 0.484,
+      "recall_ceiling@20": 1.0,
+      "recall_of_ceiling@20": 0.484,
+      "hit@20": 0.9091,
+      "ndcg@20": 0.5146,
+      "mrr@20": 0.7775,
+      "map@20": 0.4089,
+      "latency_ms": {
+        "p50": 97.3,
+        "p95": 218.4,
+        "p99": 218.4,
+        "mean": 101.1,
+        "max": 218.4
+      }
+    },
+    "hybrid": {
+      "questions": 11,
+      "skipped_no_answer": 4,
+      "recall@1": 0.218,
+      "recall_ceiling@1": 0.2559,
+      "recall_of_ceiling@1": 0.852,
+      "hit@1": 0.8182,
+      "ndcg@1": 0.8182,
+      "recall@5": 0.3334,
+      "recall_ceiling@5": 0.6962,
+      "recall_of_ceiling@5": 0.4789,
+      "hit@5": 0.8182,
+      "ndcg@5": 0.5234,
+      "recall@10": 0.47,
+      "recall_ceiling@10": 0.9697,
+      "recall_of_ceiling@10": 0.4847,
+      "hit@10": 0.8182,
+      "ndcg@10": 0.5099,
+      "recall@20": 0.5032,
+      "recall_ceiling@20": 1.0,
+      "recall_of_ceiling@20": 0.5032,
+      "hit@20": 0.8182,
+      "ndcg@20": 0.5241,
+      "mrr@20": 0.8182,
+      "map@20": 0.3871,
+      "latency_ms": {
+        "p50": 204.8,
+        "p95": 413.5,
+        "p99": 413.5,
+        "mean": 221.5,
+        "max": 413.5
       }
     }
   },
   "misses": {
-    "keyword": [
+    "vector": [
       {
-        "id": "q001",
+        "id": "p004",
         "type": "filter",
         "found_at": null,
-        "ms": 114.1
+        "ms": 117.8
       },
       {
-        "id": "q002",
+        "id": "p006",
         "type": "filter",
         "found_at": null,
-        "ms": 164.7
+        "ms": 209.6
+      }
+    ],
+    "keyword": [
+      {
+        "id": "p006",
+        "type": "filter",
+        "found_at": null,
+        "ms": 124.4
+      }
+    ],
+    "hybrid": [
+      {
+        "id": "p006",
+        "type": "filter",
+        "found_at": null,
+        "ms": 227.0
       }
     ]
   }

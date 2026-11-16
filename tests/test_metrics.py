@@ -180,3 +180,38 @@ def test_evaluate_run_averages_and_skips_the_no_answer_questions():
 def test_evaluate_run_on_an_evaluation_set_of_only_no_answer_questions():
     report = evaluate_run([(set(), ["x"]), (set(), [])], ks=(5,))
     assert report == {"questions": 0, "skipped_no_answer": 2, "latency_ms": {}}
+
+
+def test_the_recall_ceiling_is_the_hand_computed_fraction():
+    from jobrag.metrics import recall_ceiling_at_k
+
+    # 9 relevant offers, 5 slots -> at best 5/9 of them can be found.
+    assert recall_ceiling_at_k({f"o{i}" for i in range(9)}, 5) == pytest.approx(5 / 9)
+    # Fewer relevant offers than slots: a perfect score is reachable.
+    assert recall_ceiling_at_k({"a", "b"}, 5) == 1.0
+    assert recall_ceiling_at_k({"a"}, 1) == 1.0
+    with pytest.raises(ValueError, match="undefined"):
+        recall_ceiling_at_k(set(), 5)
+
+
+def test_evaluate_run_reports_recall_against_its_ceiling():
+    # Two questions, 4 relevant offers each, one hit in the top 2 for each.
+    # recall@2       = (1/4 + 1/4) / 2 = 0.25
+    # ceiling@2      = min(2, 4)/4     = 0.5
+    # recall/ceiling = 0.25 / 0.5      = 0.5
+    results = [
+        ({"a", "b", "c", "d"}, ["a", "x"]),
+        ({"e", "f", "g", "h"}, ["e", "y"]),
+    ]
+    report = evaluate_run(results, ks=(2,))
+    assert report["recall@2"] == pytest.approx(0.25)
+    assert report["recall_ceiling@2"] == pytest.approx(0.5)
+    assert report["recall_of_ceiling@2"] == pytest.approx(0.5)
+
+
+def test_a_perfect_run_reaches_its_ceiling_exactly():
+    results = [({"a", "b", "c"}, ["a", "b", "c", "x"])]
+    report = evaluate_run(results, ks=(2, 5))
+    assert report["recall_of_ceiling@2"] == pytest.approx(1.0)
+    assert report["recall_of_ceiling@5"] == pytest.approx(1.0)
+    assert report["recall@5"] == pytest.approx(1.0)

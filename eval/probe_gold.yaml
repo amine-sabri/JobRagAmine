@@ -1,0 +1,187 @@
+- id: p001
+  question: Quelle offre demande du développement en Elixir ?
+  type: fact
+  relevant_offer_ids:
+  - e1f9eb62-e1de-4184-b3f6-a2b453368a36
+  search_used: ''
+  notes: 'exhaustive labels from: elixir in text (1 offer)'
+  created_at: '2026-11-16'
+- id: p002
+  question: Quelles offres demandent de l'Erlang ?
+  type: none
+  relevant_offer_ids: []
+  search_used: ''
+  notes: 'exhaustive labels from: erlang as a whole word — zero offers. The two substring matches were
+    ''Erlangen'', a German city, which is why this is a refusal question'
+  created_at: '2026-11-16'
+- id: p003
+  question: Quelles offres de robotique utilisent le simulateur Gazebo ?
+  type: filter
+  relevant_offer_ids:
+  - 71b45b11-1812-4ac9-9af8-b7636c3e3612
+  - 783097b3-7da8-4ce8-96ca-899b33c2ff45
+  search_used: ''
+  notes: 'exhaustive labels from: gazebo in text (2)'
+  created_at: '2026-11-16'
+- id: p004
+  question: Quelles offres demandent du Pulumi ?
+  type: filter
+  relevant_offer_ids:
+  - 2fd1cdcf-4e9f-4ba4-96ff-108e1c7d71d8
+  - 3f6a896f-f0e0-4ce9-b747-8a37e0063669
+  - 663e4f86-1b10-44ab-a0fb-f5e846b1e4f4
+  - fe470000-018d-4bc9-aa93-11b2f64f6f9a
+  search_used: ''
+  notes: 'exhaustive labels from: pulumi in text (4)'
+  created_at: '2026-11-16'
+- id: p005
+  question: Quelles offres demandent un service mesh pour Kubernetes ?
+  type: filter
+  relevant_offer_ids:
+  - 20786e79-98ea-4272-929f-350591449594
+  - 663e4f86-1b10-44ab-a0fb-f5e846b1e4f4
+  - 8e4d9225-47c5-4464-8722-d2eee8f452b0
+  - ad029213-75b3-44cf-8755-9ac038333eec
+  - cf84624d-f228-4c9d-a3a9-d1a20c1fca95
+  - e4350f93-ca28-4373-8dbf-e34869761b0d
+  - e51158be-1f0c-48f4-a56d-1bd364faa219
+  search_used: ''
+  notes: 'exhaustive labels from: PARAPHRASED — istio OR ''service mesh'' in text (7); the question says
+    neither ''istio'' alone nor the product name only'
+  created_at: '2026-11-16'
+- id: p006
+  question: Quelles offres font du traitement de flux avec Apache Flink ?
+  type: filter
+  relevant_offer_ids:
+  - 1b7bf042-adbc-4d5f-8a21-12363fbb29e4
+  - 3f74bbad-d9a7-4f2a-8926-ee0dca518d6e
+  - f7add8e2-2fd1-4331-801b-054e8020023e
+  search_used: ''
+  notes: 'exhaustive labels from: flink as a whole word (3; substring matching had added STAFFLINK and
+    a Dutch ''flinke'')'
+  created_at: '2026-11-16'
+- id: p007
+  question: Quelles offres embarquées travaillent sur le bus CAN d'un véhicule ?
+  type: filter
+  relevant_offer_ids:
+  - 04dba287-b589-4d72-b69b-1eed637f479b
+  - 0b2f648c-fbb9-4dd9-b095-1980de24c704
+  - 0fc2418c-ae39-47c3-af5b-50cb56db7d33
+  - 6bc3ad23-6a8b-4a7e-8906-e5773d8d220a
+  - 77d98fe2-956a-4fd9-b972-2910e1598a6e
+  - 975f1f13-90ff-4ffe-9c5b-5c0f0d15eeac
+  - d37cbdd8-ae30-466a-a028-9470f24a2615
+  - e290a2db-4860-4f8c-8317-913ca773bfb8
+  - e4f7415b-41a1-49c4-b2bb-e65558438d52
+  search_used: ''
+  notes: 'exhaustive labels from: PARAPHRASED — ''can bus'' OR ''bus can'' in text (9)'
+  created_at: '2026-11-16'
+- id: p008
+  question: Quelles offres utilisent Kubeflow pour industrialiser des modèles ?
+  type: filter
+  relevant_offer_ids:
+  - 21159421-1162-42fe-8542-111e15cfafc3
+  - 46d7eecd-7656-4b2d-9012-a364ea61014b
+  - 55e391f0-371d-440e-8ea8-1b3f8aefb281
+  - 621581ad-e049-4c37-aae6-8783736d6e8c
+  - 7877b38c-1c53-4fbe-9269-f406546ce9e3
+  - 8837f736-8672-4ba1-b576-e798592b4b62
+  - 9754883c-0cd6-4422-9ff8-19193986b6b8
+  - d8a49f54-e779-441e-98e9-de1a8ff629c5
+  - e2cb62fe-7116-4f34-96dc-138a5cf1c0c4
+  search_used: ''
+  notes: 'exhaustive labels from: kubeflow in text (9)'
+  created_at: '2026-11-16'
+- id: p009
+  question: Quelles offres concernent un système AS/400 ?
+  type: filter
+  relevant_offer_ids:
+  - 1110116e-3692-48ab-be6b-68c01a74ef2b
+  - 2a419e48-b93f-4184-acb2-f46b71153114
+  - 3479a8e4-dcb3-48e5-9503-c524f3154762
+  - 4436cb52-cfc9-4a55-afb4-9f5318d03782
+  - 83304c3a-f9c9-4f0e-ae17-ffb0d07c2bf6
+  - b5d0b60e-49ac-4ccf-92a0-27c721f09ae0
+  - cca443f7-3b90-40f0-843f-4d3854fa5b43
+  - d66d607d-07bc-45da-a728-2ec6fc9dd24f
+  - ea4c59aa-4c86-4f0f-92b3-d719b84aa0fd
+  - f2c9d5a4-d5f7-452a-858f-29cef9b8ecf9
+  search_used: ''
+  notes: 'exhaustive labels from: as/400 in text (10)'
+  created_at: '2026-11-16'
+- id: p010
+  question: Quelles offres de calcul scientifique demandent du Fortran ?
+  type: filter
+  relevant_offer_ids:
+  - 138bce0f-bbf6-4a40-8b10-f84be9e092a3
+  - 17a10244-0209-446a-a394-bdc6deef6398
+  - 1c38f331-7e27-434c-9dcd-0e340d3015c7
+  - 30d184c7-bc61-4c24-8ca5-9d6a19a19f1c
+  - 89803fa5-8951-456a-9abc-536bc46ccd6c
+  - b0759cb0-4f6d-4b0a-aaf3-9b7024ddf30c
+  - b1409ea1-9a3b-4385-ad26-4a2e2f4fa7c1
+  - c5baba91-7cac-4560-b3ab-c4f9f0b0b7de
+  - c6dfa191-2697-49ef-b916-cffa2636bb5e
+  - da99d12c-2709-4848-ae67-43f4fa13b551
+  search_used: ''
+  notes: 'exhaustive labels from: fortran in text (11)'
+  created_at: '2026-11-16'
+- id: p011
+  question: Quelles offres utilisent la base de données Neo4j ?
+  type: filter
+  relevant_offer_ids:
+  - 06bb0471-d408-4386-be9c-d6944befb255
+  - 2ceb5fe3-8ecd-4233-b3b2-6bd227e8f7cc
+  - 3522e3f8-0739-430b-82a9-4891b55c3695
+  - 3c650ce7-566e-4689-a475-9c28a547f113
+  - 44154aec-99b7-4c87-b3b1-7779f010f3bf
+  - 49ea6f2b-fb10-439c-a337-ec9538fe8899
+  - 4d161778-fda0-4701-b353-1cebd8edda93
+  - 58610ccd-55ef-47f7-a7c4-8a0ed6be9829
+  - 6a5a5859-245f-4340-9ba0-b066ab6be55a
+  - 6e1cacbd-f3a9-45b5-a187-424512c64522
+  - 7ddd27fe-3fdb-4657-8572-8567da21bbef
+  - 98d6afbd-d70f-4758-ab90-8a8681448e08
+  search_used: ''
+  notes: 'exhaustive labels from: neo4j in text (12)'
+  created_at: '2026-11-16'
+- id: p012
+  question: Quelles offres parlent d'exporter des modèles au format ONNX ?
+  type: filter
+  relevant_offer_ids:
+  - 27a87204-425e-4efc-a92d-291d654bd902
+  - 2aaa2449-8f0c-477b-a6ec-9cae5ceab9ed
+  - 6564534c-f2da-467c-a1ed-854b6d3191a4
+  - 6c8ea83b-a8ae-47e4-afd2-9f2311e89b07
+  - 8eb302b0-1539-4e19-aefe-a7ccaf16663b
+  - a2882db1-03bb-42d8-9aca-be455d8b7db6
+  - a4dd0889-9af9-4554-a25c-1b7f4b70faae
+  - de356248-79fd-491e-9cb4-c93156b5bd47
+  - eb051596-5bd1-4ca7-a1f1-899ff033efe2
+  - ede72507-87e5-427e-ae8c-d1cd8ef51101
+  - f1fe0a49-82b1-4ba0-8a38-3a6e287cda20
+  - f41c6e7c-b7ea-4ef0-92fd-404e6704820a
+  search_used: ''
+  notes: 'exhaustive labels from: onnx in text (12)'
+  created_at: '2026-11-16'
+- id: p013
+  question: Quelles offres proposent un contrat en alternance ?
+  type: none
+  relevant_offer_ids: []
+  search_used: ''
+  notes: 'exhaustive labels from: contract=alternance(4) — measured: zero in the whole corpus'
+  created_at: '2026-11-16'
+- id: p014
+  question: Quelles offres sont basées à Reykjavik ?
+  type: none
+  relevant_offer_ids: []
+  search_used: ''
+  notes: 'exhaustive labels from: city=Reykjavik — not a city in this corpus'
+  created_at: '2026-11-16'
+- id: p015
+  question: Quelles offres recherchent un plombier spécialisé en informatique quantique ?
+  type: none
+  relevant_offer_ids: []
+  search_used: ''
+  notes: 'exhaustive labels from: plomberie AND quantique — a deliberately absent combination'
+  created_at: '2026-11-16'

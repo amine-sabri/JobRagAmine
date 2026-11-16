@@ -76,6 +76,10 @@ def search_chunks(
 
     for row in rows:
         row["score"] = round(float(row["score"]), 4)
+        # Postgres hands back a uuid.UUID, which is neither JSON-serialisable
+        # nor comparable to the string ids in the evaluation set: the metrics
+        # would have scored every question 0.0 without raising anything.
+        row["offer_id"] = str(row["offer_id"])
         if row["posted_at"] is not None:
             row["posted_at"] = row["posted_at"].isoformat()
     return {

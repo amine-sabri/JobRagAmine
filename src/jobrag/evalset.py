@@ -10,7 +10,6 @@ blind spots and recall@5 would be flattered.
 
 import math
 import re
-import unicodedata
 from collections import Counter
 from datetime import date
 from pathlib import Path
@@ -19,6 +18,7 @@ from typing import Any
 import yaml
 
 from .enums import CONTRACT_LABELS
+from .text import STOPWORDS, content_tokens, fold, tokenise  # noqa: F401 - re-exported
 
 #: Question families the evaluation set has to cover, with the target mix.
 QUESTION_TYPES: dict[str, str] = {
@@ -39,34 +39,9 @@ TARGET_MIX: dict[str, int] = {
 FILTER_RE = re.compile(r"\b(city|contract|lang|remote|source|truncated):(\S+)", re.IGNORECASE)
 _TOKEN_RE = re.compile(r"[a-z0-9#+]+")
 
-# A question is mostly grammar: "Quelles offres demandent Kubernetes ?" carries
-# one content word. Dropping these keeps the candidate search on the signal.
-STOPWORDS = frozenset(
-    """
-    a au aux avec ce ces dans de des du elle en et eux il je la le les leur lui ma mais me meme
-    mes moi mon ne nos notre nous on ou par pas pour qu que quel quelle quelles quels qui sa se
-    ses son sur ta te tes toi ton tu un une vos votre vous y est sont ont offre offres poste
-    postes emploi emplois recherche recherches demandent demande combien quoi dont ainsi
-    the a an and are as at be by for from has have in is it its of on or that this to was were
-    what which who with job jobs offer offers position positions looking
-    """.split()  # noqa: SIM905 - a readable block beats a 120-item list literal
-)
-
-
-def fold(text: str) -> str:
-    """Lowercase, unaccented form used for every comparison."""
-    if not text:
-        return ""
-    decomposed = unicodedata.normalize("NFKD", text.lower())
-    return "".join(ch for ch in decomposed if not unicodedata.combining(ch))
-
-
-def tokenise(text: str) -> list[str]:
-    return _TOKEN_RE.findall(fold(text))
-
 
 def parse_query(raw: str) -> tuple[str, dict[str, str]]:
-    """Split `kubernetes city:Lille contract:CDI` into text and filters.
+    """Split `kubernetes city:Lille` into text and filters.
 
     >>> parse_query("kubernetes city:Lille")
     ('kubernetes', {'city': 'lille'})
@@ -97,11 +72,6 @@ def matches_filters(offer: dict[str, Any], filters: dict[str, str]) -> bool:
         "truncated": lambda v: bool(offer.get("is_truncated")) is (v in TRUTHY),
     }
     return all(check(filters[key]) for key, check in checks.items() if key in filters)
-
-
-def content_tokens(text: str) -> list[str]:
-    """Tokens worth searching on: no stopwords, no single characters."""
-    return [t for t in tokenise(text) if t not in STOPWORDS and len(t) > 1]
 
 
 def document_frequencies(folded_texts: list[str]) -> Counter:

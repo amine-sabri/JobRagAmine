@@ -90,6 +90,19 @@ def average_precision(relevant: Iterable[str], ranked: Sequence[str], k: int) ->
     return total / min(len(relevant), k)
 
 
+def recall_ceiling_at_k(relevant: Iterable[str], k: int) -> float:
+    """The best recall@k this question allows: min(k, |relevant|) / |relevant|.
+
+    A question with 9 relevant offers cannot score above 5/9 = 0.56 at k=5, so
+    a raw recall@5 of 0.19 means something very different from 0.19 out of 1.0.
+    Reported next to the metric, with the ratio, so the number is readable.
+    """
+    relevant = set(relevant)
+    if not relevant:
+        raise ValueError("the ceiling is undefined with no relevant offer")
+    return min(k, len(relevant)) / len(relevant)
+
+
 def percentiles(values: Sequence[float]) -> dict[str, float]:
     """p50/p95/p99 and the mean, for latencies. Empty input gives an empty dict."""
     if not values:
@@ -131,9 +144,12 @@ def evaluate_run(
 
     report: dict[str, Any] = {"questions": len(scorable), "skipped_no_answer": skipped}
     for k in ks:
-        report[f"recall@{k}"] = round(
-            sum(recall_at_k(r, ranked, k) for r, ranked in scorable) / len(scorable), 4
-        )
+        recall = sum(recall_at_k(r, ranked, k) for r, ranked in scorable) / len(scorable)
+        ceiling = sum(recall_ceiling_at_k(r, k) for r, _ in scorable) / len(scorable)
+        report[f"recall@{k}"] = round(recall, 4)
+        report[f"recall_ceiling@{k}"] = round(ceiling, 4)
+        # How much of the achievable recall was actually achieved.
+        report[f"recall_of_ceiling@{k}"] = round(recall / ceiling, 4) if ceiling else 0.0
         report[f"hit@{k}"] = round(
             sum(hit_rate_at_k(r, ranked, k) for r, ranked in scorable) / len(scorable), 4
         )

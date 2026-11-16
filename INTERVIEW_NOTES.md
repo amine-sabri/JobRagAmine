@@ -336,3 +336,91 @@ With a property that does not need them: a query naming an exact technology
 score a semantic question, and it cannot tell a good Kubernetes offer from a
 bad one — but it caught a retriever returning zero results, which no amount of
 waiting for labelled data would have.
+
+## Phase 3b — a gold set with exhaustive labels, and what it measured
+
+The earlier probe only checked that a query's term appeared in the results,
+which cannot distinguish a good hit from a bad one. So: 15 questions with
+labelled relevant offers — 11 answerable, 4 refusals.
+
+### How the labels were made, and why not by hand
+
+Labelling by reading search results would have meant the candidates came from
+the retrievers under test: anything all three miss would never be labelled, and
+every score would be flattered. Instead each question carries an **objective
+predicate** over `data/offers.jsonl` (`scripts/build_probe_gold.py`), and the
+relevant set is *every* canonical offer satisfying it. The labels are
+reproducible — the script recomputes them — and nothing is missed.
+
+Two guards made the set honest:
+
+* **A predicate matching more than 12 offers is rejected.** My first twelve
+  predicates were all rejected: "kubernetes AND terraform in Paris, CDI"
+  matches 20 offers, "fastapi AND postgres" 42, "kafka AND spark" 37,
+  "freelance AND kubernetes" **169**. A question with 169 right answers measures
+  the labelling, not the retrieval. Rare technologies are what produce an
+  enumerable relevant set in a corpus this dense, which is why the set is built
+  from Elixir, Pulumi, Flink, Kubeflow, AS/400, Fortran, Neo4j and ONNX.
+* **The question wording avoids the predicate's own words** where a natural
+  paraphrase exists ("un service mesh pour Kubernetes" for istio, "le bus CAN
+  d'un véhicule" for `can bus`). A predicate is lexical; a question repeating
+  its terms would hand the answer to the keyword retriever.
+
+### The results
+
+| configuration | recall@5 | share of ceiling | hit@1 | hit@5 | mrr@20 | recall@20 | p50 ms |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| vector | 0.164 | 24% | 0.182 | 0.545 | 0.365 | 0.273 | 115 |
+| keyword | **0.433** | **62%** | 0.727 | 0.818 | 0.777 | 0.484 | 97 |
+| hybrid (RRF) | 0.333 | 48% | **0.818** | 0.818 | **0.818** | **0.503** | 205 |
+
+`recall@5` cannot reach 1.0 here: with a median of 9 relevant offers per
+question, five slots cap it at **0.696**, so the "share of ceiling" column is
+the one to read.
+
+No configuration wins everything. Keyword retrieval finds the most relevant
+offers in five slots; fusion puts a relevant offer *first* far more often
+(hit@1 0.818 against 0.182 for vectors) and retrieves the most overall by k=20.
+If one number has to be chosen for a product, it is hit@1 or MRR, and fusion
+wins both.
+
+**The caveat that matters:** this gold set is built from *rare* technologies by
+construction, which favours exact lexical matching. The earlier label-free
+probe showed vector search at 5/5 on *common* ones (Kubernetes, FastAPI,
+Terraform). So the fair statement is not "keyword beats vectors" but "vector
+retrieval degrades on terms that appear in a handful of offers, and that is
+exactly where this gold set lives".
+
+**And the honest statistical caveat:** n = 11 answerable questions. The 95%
+confidence interval on a recall@5 of 0.43 at that sample size is roughly ±0.2.
+This set is for catching breakage and comparing configurations, not for a
+headline claim — the 100-question set is what can carry one.
+
+### Two bugs found by reading the failures
+
+**My labels were wrong before the retrievers were.** Three questions were
+missed by all three configurations, which is suspicious rather than
+informative, so I read them. The predicate matched substrings: `erlang` matched
+**Erlangen**, a German city, and `flink` matched **STAFFLINK RH** (a staffing
+agency) and the Dutch *"een flinke dosis enthousiasme"*. The corpus contains no
+Erlang offer at all, so that question became a refusal question, and Flink went
+from 5 labelled offers to 3. The retrievers had been penalised for being right.
+Matching is now on word boundaries, with lookarounds rather than `\b` so
+`as/400` and `c++` still work.
+
+**The keyword retriever was crippled by question grammar.** Postgres's `french`
+dictionary does not treat "quelles", "offres" or "demandent" as stopwords, so
+*"Quelles offres demandent du Pulumi ?"* strict-ANDed to zero rows, and the
+loose OR fallback let the frequency of "offres" outrank the four offers that
+mention Pulumi — `ts_rank_cd` has no IDF. Stripping the question scaffolding
+before the query reaches Postgres (`jobrag.text.content_tokens`) moved keyword
+recall@5 from **0.043 to 0.433**, a tenfold change from deleting four words.
+
+### What is still missed, and by what
+
+`p006` ("traitement de flux avec Apache Flink", 3 relevant offers) is missed by
+all three. Reading them explains it: Flink appears once, inside a long list —
+*"un framework de calcul distribué tel que Spark, Storm, Flink"*. It dominates
+no chunk, so neither the embedding nor the term frequency gives it weight. This
+is the case a cross-encoder reranker should fix, and it is the first thing to
+test in phase 5.
