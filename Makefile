@@ -86,6 +86,10 @@ chunks: ## Chunk the canonical offers into data/chunks.jsonl
 .PHONY: data
 data: export stats sample chunks ## Export, describe, re-sample and chunk in one go
 
+.PHONY: ask
+ask: ## Ask a question: make ask Q="offres kubernetes à Lille ?"
+	$(PY) scripts/ask.py --mode $(or $(MODE),hybrid) "$(Q)"
+
 .PHONY: label
 label: ## Write and label the evaluation questions (phase 4)
 	$(PY) scripts/label_questions.py

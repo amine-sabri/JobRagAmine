@@ -7,9 +7,9 @@ demonstrated: every retrieval and answer-quality number in this README is produc
 Each answer cites the offers it used (id, title, company, city, link), and answers
 *"I don't know"* when the offers do not contain the answer.
 
-**Status: phases 0–3 complete** — 32,013 offers exported read-only, 51,321 chunks embedded into
-pgvector, and `/search` answering in vector, keyword and hybrid modes. Retrieval *quality* numbers
-wait on the hand-labelled evaluation set (phase 4). No retrieval results yet: the tables below stay empty until
+**Status: phases 0–3 and 6 complete** — 32,013 offers exported read-only, 51,321 chunks embedded
+into pgvector, `/search` in vector, keyword and hybrid modes, and `/ask` answering with citations
+or refusing. Answer *quality* numbers wait on the hand-labelled evaluation set (phase 4). No retrieval results yet: the tables below stay empty until
 phases 5 and 7 fill them from real runs.
 
 ## Architecture
@@ -51,6 +51,7 @@ make models                    # CPU-only torch + sentence-transformers (~2 GB, 
 make schema                    # offers/chunks tables, HNSW + French full-text indexes
 make index                     # embed the chunks (resumable)
 make label                     # write and label the evaluation questions (phase 4)
+make ask Q="offres kubernetes à Lille ?"   # an answer with citations, or a refusal
 make test                     # unit tests, no database needed
 make test-all                 # + the tests that need the container
 make api                      # http://127.0.0.1:8010
@@ -286,7 +287,7 @@ citation accuracy._
 | 3 | Vector baseline + keyword + hybrid retrieval | **done** |
 | 4 | 100-question evaluation set, hand-labelled | tool ready, questions to write |
 | 5 | Retrieval metrics: baseline → hybrid + RRF → + reranker, with latency | runner ready |
-| 6 | Generation: numbered sources, mandatory citations, metadata filters | |
+| 6 | Generation: numbered sources, mandatory citations, metadata filters | **done** |
 | 7 | Answer evaluation: faithfulness, refusals, citation accuracy | |
 | 8 | Packaging: diagram, results, failure cases, CI | |
 | 9 | Optional: embedding-model comparison, caching, web page | |

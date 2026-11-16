@@ -1,7 +1,7 @@
 """FastAPI application.
 
 /health (phase 0), /search (retrieval only, for debugging and for the phase-5
-measurements). /ask (answer + citations) arrives in phase 6.
+measurements), /ask (an answer with citations, or a refusal).
 """
 
 from functools import lru_cache
@@ -14,6 +14,8 @@ from . import __version__
 from .config import get_settings
 from .db import REQUIRED_EXTENSIONS, check_database
 from .embed import get_embedder
+from .generate import answer_question
+from .llm import LLMError, OllamaLLM
 from .retrieve.fusion import fuse_hits
 from .retrieve.keyword import search_chunks as keyword_search_chunks
 from .retrieve.vector import search_chunks
@@ -100,3 +102,49 @@ def search(
             {"error": "embedding backend unavailable", "detail": str(exc)},
             status_code=503,
         )
+
+
+@lru_cache(maxsize=1)
+def _llm() -> OllamaLLM:
+    """The generation backend, built once from .env."""
+    settings = get_settings()
+    return OllamaLLM(settings.ollama_model, base_url=settings.ollama_base_url)
+
+
+@app.get("/ask")
+def ask(
+    q: str = Query(..., min_length=3, description="the question, in French or English"),
+    k: int = Query(3, ge=1, le=10, description="offers put in the prompt"),
+    mode: Literal["vector", "keyword", "hybrid"] = Query("hybrid"),
+    filters: bool = Query(True, description="extract city/contract/date filters from the question"),
+    relax_filters: bool = Query(
+        False,
+        description="search without the filters when they match nothing "
+        "(measured to cause fabricated answers)",
+    ),
+) -> JSONResponse:
+    """Answer `q` from the indexed offers, with citations, or refuse.
+
+    Slow by nature here: generation runs on CPU at a few tokens per second, so
+    a question costs roughly two minutes. The timings are in the response.
+    """
+    try:
+        embedder = _embedder() if mode in {"vector", "hybrid"} else None
+        payload = answer_question(
+            q,
+            llm=_llm(),
+            embedder=embedder,
+            k=k,
+            mode=mode,
+            use_filters=filters,
+            relax_filters=relax_filters,
+        )
+    except ImportError as exc:  # sentence-transformers / torch not installed
+        return JSONResponse(
+            {"error": "embedding backend unavailable", "detail": str(exc)}, status_code=503
+        )
+    except LLMError as exc:
+        return JSONResponse({"error": "generation backend unavailable", "detail": str(exc)}, 503)
+    if payload.get("error"):
+        return JSONResponse(payload, status_code=503)
+    return JSONResponse(payload)

@@ -35,6 +35,7 @@ import time
 from typing import Any
 
 from ..db import connection
+from ..filters import Filters
 from ..text import content_tokens
 
 #: AND semantics: every term must be present. Precise, and empty on questions.
@@ -68,14 +69,24 @@ SELECT
 FROM chunks c
 JOIN offers o ON o.id = c.offer_id,
      q
-WHERE c.tsv @@ q.tsquery
+WHERE c.tsv @@ q.tsquery{extra}
 ORDER BY score DESC, c.chunk_id
 LIMIT %(limit)s
 """
 
 
-def _run(cur, tsquery_sql: str, query: str, limit: int) -> list[dict[str, Any]]:
-    cur.execute(SEARCH_SQL.format(tsquery=tsquery_sql), {"query": query, "limit": limit})
+def _run(
+    cur,
+    tsquery_sql: str,
+    query: str,
+    limit: int,
+    extra: str = "",
+    filter_params: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    cur.execute(
+        SEARCH_SQL.format(tsquery=tsquery_sql, extra=extra),
+        {"query": query, "limit": limit, **(filter_params or {})},
+    )
     columns = [description.name for description in cur.description]
     return [dict(zip(columns, row, strict=True)) for row in cur.fetchall()]
 
@@ -85,7 +96,13 @@ def clean_query(query: str) -> str:
     return " ".join(content_tokens(query)) or query
 
 
-def search_chunks(query: str, *, k: int = 5, strict_only: bool = False) -> dict[str, Any]:
+def search_chunks(
+    query: str,
+    *,
+    k: int = 5,
+    strict_only: bool = False,
+    filters: Filters | None = None,
+) -> dict[str, Any]:
     """Top-k chunks for `query` by French full-text ranking.
 
     Same shape as the vector search, so the two can be fused (phase 5) and
@@ -93,13 +110,15 @@ def search_chunks(query: str, *, k: int = 5, strict_only: bool = False) -> dict[
     """
     started = time.perf_counter()
     searchable = clean_query(query)
+    conditions, filter_params = (filters or Filters()).as_conditions()
+    extra = ("\n  AND " + "\n  AND ".join(conditions)) if conditions else ""
     with connection() as conn, conn.cursor() as cur:
-        rows = _run(cur, STRICT_QUERY, searchable, k)
+        rows = _run(cur, STRICT_QUERY, searchable, k, extra, filter_params)
         mode = "strict"
         if len(rows) < k and not strict_only:
             before = len(rows)
             seen = {row["chunk_id"] for row in rows}
-            for row in _run(cur, LOOSE_QUERY, searchable, k * 3):
+            for row in _run(cur, LOOSE_QUERY, searchable, k * 3, extra, filter_params):
                 if row["chunk_id"] not in seen:
                     rows.append(row)
                     seen.add(row["chunk_id"])
@@ -121,6 +140,7 @@ def search_chunks(query: str, *, k: int = 5, strict_only: bool = False) -> dict[
         "query": query,
         "searchable": searchable,
         "k": k,
+        "filters": (filters or Filters()).describe(),
         "query_mode": mode,
         "results": rows[:k],
         "timing_ms": {"database": round(elapsed * 1000, 1), "total": round(elapsed * 1000, 1)},

@@ -424,3 +424,90 @@ all three. Reading them explains it: Flink appears once, inside a long list —
 no chunk, so neither the embedding nor the term frequency gives it weight. This
 is the case a cross-encoder reranker should fix, and it is the first thing to
 test in phase 5.
+
+## Phase 6 — generation: three prompt iterations and one hallucination
+
+### The prompt was wrong twice before it worked
+
+Each version is in the module's comments, because the failures are the
+explanation:
+
+1. **Six numbered rules** (~350 of ~1,100 prompt tokens). The model answered
+   `[1], [2], [3]` — citations with nothing asserted. Rules describing a format
+   teach it worse than one example of it.
+2. **Rules trimmed, refusal clause next to the citation format.** The model
+   templated the refusal per source: `[1] Je ne sais pas. [2] Je ne sais pas.`
+   The refusal instruction now comes last and says explicitly that it replaces
+   the entire answer.
+3. **A user message ending in `Réponse (avec les citations [n]) :`.** A chat
+   model imitates a completion-style prefix instead of answering it. Instruction
+   first, sources second, question last — and the answers became real
+   sentences with inline citations.
+
+A `degenerate_answer` flag now reports the first failure mode in the payload:
+an answer whose text, citations removed, is shorter than 15 characters is not
+an answer, and phase 7 must not score it as one.
+
+### The hallucination, and why the fix made it faster
+
+*"Quelles offres proposent un contrat en alternance ?"* — the corpus contains
+**zero** alternance offers (`ContractType` 4 never occurs in 32,013 rows). The
+filter extractor correctly produced `contract_type=4`, the search correctly
+returned nothing, and then my own relaxation logic searched again *without* the
+filter, handed the model four CDD/CDI offers, and it answered:
+
+> "[2] Ingénieur système Linux … CDD **proposé une opportunité d'alternance**."
+
+An invented claim, on exactly the question class where refusing is the whole
+point. The logic was mine, not the model's: I had written the relaxation to
+avoid over-filtering, and it converted a correct "no" into a fabrication.
+
+Now, when extracted filters match nothing, the question is refused
+deterministically — **without calling the model at all**. The same question
+went from a 113-second fabrication to a 0.1-second correct refusal.
+`relax_filters=True` keeps the old behaviour available so phase 7 can measure
+both rather than trust this reasoning.
+
+### Measured generation cost on this machine
+
+`qwen2.5:3b-instruct` on 4 CPU cores: **4–6 tokens/s decode**, and prefill is
+the real cost — a 919-token prompt took ~113 s of the 133 s total, for a
+74-token answer. Consequences, all of them sizing decisions rather than
+preferences:
+
+| knob | value | why |
+| --- | --- | --- |
+| sources in the prompt | 3 | each source is ~150 prompt tokens, i.e. seconds |
+| characters per source | 500 | one chunk is up to 1,200; the whole chunk is rarely needed |
+| system prompt | 628 chars | the first one was 1,100 and bought worse answers |
+| `num_predict` | 200 | 200 tokens is ~40 s of decode |
+| client timeout | 600 s | a cold model load took **2m28** under memory pressure |
+
+So a question costs roughly one to two minutes here. That is the honest number,
+and it is why `openai_compat.py` exists: phase 7 needs to know whether the
+answer quality is limited by the retrieval or by a 3B model, and the only way
+to tell is to run the same questions through an API model.
+
+### Questions an interviewer could ask
+
+**"Why extract filters with regexes instead of letting the model do it?"**
+Because a filter is a database constraint and a mistake is silent: the wrong
+`city` does not produce a wrong answer, it produces *no* answer, and the
+assistant then refuses about something the corpus contains. Rules I can test —
+a city needs a locative preposition, two cities disable the filter, a negation
+disables its filter — are auditable in a way a model's JSON output is not. The
+model could do this better on ambiguous phrasing, and that is a fair phase-9
+experiment; it would need the same guards either way.
+
+**"Your assistant refuses without even asking the model. Isn't that cheating?"**
+It is the opposite: it is refusing to let the model answer a question the data
+has already answered. If `contract_type=4` matches zero rows, no prompt can
+honestly produce an offer, and the measured behaviour was that it produced one
+anyway. The deterministic path is also the fast one — 0.1 s against 113 s.
+
+**"How do you know an answer is grounded?"**
+Three signals, all in the payload rather than in a human's impression:
+`cited_indexes` (which sources were cited), `invalid_citations` (a `[9]` that
+points at nothing — a fabricated reference), and `uncited_answer` (an assertion
+with no citation at all). Phase 7 turns those into faithfulness and
+citation-accuracy rates, against 30 answers checked by hand.

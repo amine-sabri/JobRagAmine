@@ -10,3 +10,4 @@ fastapi
 uvicorn[standard]
 psycopg[binary]
 pydantic-settings
+httpx           # the LLM clients

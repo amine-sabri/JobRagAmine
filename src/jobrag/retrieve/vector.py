@@ -11,6 +11,7 @@ from typing import Any
 
 from ..db import connection
 from ..embed import Embedder
+from ..filters import Filters
 
 SEARCH_SQL = """
 SELECT
@@ -32,7 +33,7 @@ SELECT
     o.duplicate_count
 FROM chunks c
 JOIN offers o ON o.id = c.offer_id
-WHERE c.embedding IS NOT NULL
+WHERE c.embedding IS NOT NULL{extra}
 ORDER BY c.embedding <=> %(vector)s::vector
 LIMIT %(limit)s
 """
@@ -49,16 +50,27 @@ def search_chunks(
     *,
     k: int = 5,
     ef_search: int = 80,
+    filters: Filters | None = None,
 ) -> dict[str, Any]:
     """Top-k chunks for `query`, with the latency split that explains them.
 
     `ef_search` is HNSW's accuracy/speed knob: higher explores more of the
     graph. It is reported with the results, because a recall number without it
     is not reproducible.
+
+    With metadata filters the plain index scan is not enough: HNSW returns its
+    `ef_search` nearest neighbours and *then* the filter removes some, so a
+    narrow filter can yield almost nothing. pgvector 0.8 solves this with
+    iterative scans — the index keeps walking until enough rows survive the
+    filter — so `hnsw.iterative_scan` is switched on only when a filter is
+    present, and left off otherwise to keep the unfiltered path fast.
     """
     started = time.perf_counter()
     vector = embedder.encode_queries([query])[0]
     embedded = time.perf_counter()
+
+    conditions, filter_params = (filters or Filters()).as_conditions()
+    extra = ("\n  AND " + "\n  AND ".join(conditions)) if conditions else ""
 
     with connection() as conn, conn.cursor() as cur:
         # SET does not accept bound parameters, so the knob goes through
@@ -66,9 +78,11 @@ def search_chunks(
         # value into a SET statement would work too, and would be the kind of
         # string-built SQL this project should not contain.
         cur.execute("SELECT set_config('hnsw.ef_search', %s, true)", (str(int(ef_search)),))
+        if conditions:
+            cur.execute("SELECT set_config('hnsw.iterative_scan', 'relaxed_order', true)")
         cur.execute(
-            SEARCH_SQL,
-            {"vector": to_vector_literal(vector), "limit": k},
+            SEARCH_SQL.format(extra=extra),
+            {"vector": to_vector_literal(vector), "limit": k, **filter_params},
         )
         columns = [description.name for description in cur.description]
         rows = [dict(zip(columns, row, strict=True)) for row in cur.fetchall()]
@@ -86,6 +100,7 @@ def search_chunks(
         "query": query,
         "k": k,
         "ef_search": ef_search,
+        "filters": (filters or Filters()).describe(),
         "results": rows,
         "timing_ms": {
             "embedding": round((embedded - started) * 1000, 1),
