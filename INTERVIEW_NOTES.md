@@ -237,3 +237,31 @@ to a design that assumes cheap re-indexing would not have been.
 | Only canonical offers are proposed | a copy is never "the" answer — its canonical row is, and that row carries the other cities | labelling against all 32,013 rows |
 | `type` is guessed and confirmed, never inferred silently | the target mix (30 fact / 25 filter / 15 aggregation / 15 offer / 15 none) only holds if the type is right, and only Amine knows what he meant | automatic classification |
 | "none" questions are a first-class type, validated | the refusal rate of phase 7 needs questions with **no** answer; the schema refuses a "none" question that has relevant ids, and any other type without them | treating them as a comment |
+
+## Phase 4 — what makes a question measurable
+
+Found while smoke-testing the evaluation runner, and it decides how the 100
+questions should be written.
+
+A question like *"Quelles offres demandent Kubernetes ?"* has **659 relevant
+offers** in half of this corpus alone. Nobody can label 659 ids, so whatever
+subset gets labelled, recall@5 measures something close to luck: the system can
+return five perfectly good Kubernetes offers and score 0.0 because they are not
+the five that were written down. The metric would be reporting the labelling,
+not the retrieval.
+
+A measurable question has a relevant set that is small and enumerable:
+
+| not measurable | measurable |
+| --- | --- |
+| "Quelles offres demandent Kubernetes ?" | "Quelles offres demandent Kubernetes **et** Terraform à Lille en CDI ?" |
+| "Quelles offres parlent de Python ?" | "Quelle entreprise recrute un développeur Python **chez un éditeur de logiciels médicaux** ?" |
+| "Quelles offres sont en télétravail ?" | "Quelles offres en télétravail **complet** mentionnent un salaire supérieur à 60 k€ ?" |
+
+The rule of thumb: if the honest answer to "how many offers answer this?" is
+more than about ten, narrow the question until it is not.
+
+This does not apply to the `aggregation` family ("combien d'offres en CDI à
+Lille ?"), where the answer is a number rather than a set of offers — there,
+the labelled ids are the offers the count is built from, and the count itself
+is what phase 7 checks.

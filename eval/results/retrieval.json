@@ -1,0 +1,46 @@
+{
+  "command": "python scripts/eval_retrieval.py --modes keyword --depth 20",
+  "reports": {
+    "keyword": {
+      "questions": 2,
+      "skipped_no_answer": 1,
+      "recall@1": 0.0,
+      "hit@1": 0.0,
+      "ndcg@1": 0.0,
+      "recall@3": 0.0,
+      "hit@3": 0.0,
+      "ndcg@3": 0.0,
+      "recall@5": 0.0,
+      "hit@5": 0.0,
+      "ndcg@5": 0.0,
+      "recall@10": 0.0,
+      "hit@10": 0.0,
+      "ndcg@10": 0.0,
+      "mrr@10": 0.0,
+      "map@10": 0.0,
+      "latency_ms": {
+        "p50": 114.1,
+        "p95": 164.7,
+        "p99": 164.7,
+        "mean": 125.8,
+        "max": 164.7
+      }
+    }
+  },
+  "misses": {
+    "keyword": [
+      {
+        "id": "q001",
+        "type": "filter",
+        "found_at": null,
+        "ms": 114.1
+      },
+      {
+        "id": "q002",
+        "type": "filter",
+        "found_at": null,
+        "ms": 164.7
+      }
+    ]
+  }
+}
