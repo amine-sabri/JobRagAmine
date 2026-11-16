@@ -78,3 +78,93 @@ def test_a_missing_embedding_backend_is_a_503_not_a_500(monkeypatch, settings_en
     response = client.get("/search", params={"q": "kubernetes"})
     assert response.status_code == 503
     assert response.json()["error"] == "embedding backend unavailable"
+
+
+KEYWORD_HIT = {**HIT, "chunk_id": "b:0", "offer_id": "b", "score": 0.1608, "title": "Dev FastAPI"}
+
+
+def _hybrid_client(monkeypatch):
+    """Both retrievers faked: the endpoint's fusion wiring is what is tested."""
+    monkeypatch.setattr(
+        api,
+        "search_chunks",
+        lambda query, embedder, *, k=5, ef_search=80: {
+            "query": query,
+            "k": k,
+            "results": [HIT, KEYWORD_HIT],
+            "timing_ms": {"embedding": 40.0, "database": 5.0, "total": 45.0},
+        },
+    )
+    monkeypatch.setattr(
+        api,
+        "keyword_search_chunks",
+        lambda query, *, k=5: {
+            "query": query,
+            "k": k,
+            "results": [KEYWORD_HIT],
+            "timing_ms": {"database": 8.0, "total": 8.0},
+        },
+    )
+    monkeypatch.setattr(api, "_embedder", lambda: object())
+    return TestClient(api.app, raise_server_exceptions=False)
+
+
+def test_keyword_mode_does_not_touch_the_embedding_model(monkeypatch, settings_env):
+    def explode():
+        raise AssertionError("the model must not be loaded for a keyword search")
+
+    monkeypatch.setattr(api, "_embedder", explode)
+    monkeypatch.setattr(
+        api,
+        "keyword_search_chunks",
+        lambda query, *, k=5: {"query": query, "k": k, "results": [HIT], "timing_ms": {}},
+    )
+    response = TestClient(api.app).get("/search", params={"q": "kubernetes", "mode": "keyword"})
+    assert response.status_code == 200
+    assert response.json()["results"][0]["offer_id"] == HIT["offer_id"]
+
+
+def test_hybrid_mode_fuses_both_runs(monkeypatch, settings_env):
+    response = _hybrid_client(monkeypatch).get(
+        "/search", params={"q": "kubernetes", "mode": "hybrid", "k": 2}
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["mode"] == "hybrid"
+    # The chunk both retrievers returned must come first: 2nd + 1st beats 1st alone.
+    assert body["results"][0]["chunk_id"] == "b:0"
+    assert body["results"][0]["ranks"] == [2, 1]
+    assert body["results"][0]["rrf_score"] > body["results"][1]["rrf_score"]
+    assert set(body["timing_ms"]) == {"vector", "keyword", "total"}
+
+
+def test_hybrid_searches_deeper_than_k_before_fusing(monkeypatch, settings_env):
+    # Fusion can only promote what the other list ranked low, so each retriever
+    # must look past k.
+    seen = {}
+
+    monkeypatch.setattr(
+        api,
+        "search_chunks",
+        lambda query, embedder, *, k=5, ef_search=80: (
+            seen.update(vector_k=k)
+            or {"query": query, "k": k, "results": [], "timing_ms": {"total": 1.0}}
+        ),
+    )
+    monkeypatch.setattr(
+        api,
+        "keyword_search_chunks",
+        lambda query, *, k=5: (
+            seen.update(keyword_k=k)
+            or {"query": query, "k": k, "results": [], "timing_ms": {"total": 1.0}}
+        ),
+    )
+    monkeypatch.setattr(api, "_embedder", lambda: object())
+    TestClient(api.app).get("/search", params={"q": "kubernetes", "mode": "hybrid", "k": 5})
+    assert seen["vector_k"] == 20
+    assert seen["keyword_k"] == 20
+
+
+def test_an_unknown_mode_is_rejected(monkeypatch, settings_env):
+    response = _client(monkeypatch).get("/search", params={"q": "kubernetes", "mode": "magic"})
+    assert response.status_code == 422
