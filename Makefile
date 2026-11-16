@@ -76,6 +76,14 @@ chunks: ## Chunk the canonical offers into data/chunks.jsonl
 .PHONY: data
 data: export stats sample chunks ## Export, describe, re-sample and chunk in one go
 
+.PHONY: label
+label: ## Write and label the evaluation questions (phase 4)
+	$(PY) scripts/label_questions.py
+
+.PHONY: label-stats
+label-stats: ## Coverage of the evaluation set against the target mix
+	$(PY) scripts/label_questions.py --stats
+
 .PHONY: test
 test: ## Run the unit tests (no database needed)
 	$(PY) -m pytest

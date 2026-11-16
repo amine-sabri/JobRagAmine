@@ -186,3 +186,54 @@ offers truncated at 500 characters by the source board, one short chunk each. Am
 offers the mean is 3.8 chunks of ~1,000 characters. It does mean the phase-5 comparison between
 1,200 and 2,000 characters is really a comparison over the full-text half of the corpus, which is
 worth saying out loud when I report it.
+
+## Phase 2b — embeddings, and what the CPU actually does
+
+### Measured throughput, and a wrong optimisation
+
+| path | chunks/s |
+| --- | --- |
+| 16-chunk `encode()` calls, file order (first implementation) | 0.96 |
+| 16-chunk calls, length-sorted input | 1.41 |
+| one `encode()` call per 512-chunk window (shipped) | 1.75 |
+
+Three lessons, in order of how wrong I was. First, I predicted 20–40 chunks/s on 4 CPU cores for a
+278M-parameter model; the truth is **1–2.6 chunks/s** depending on chunk length, so the full corpus
+is hours, not minutes. Second, I blamed padding waste and "fixed" it by sorting the whole corpus by
+length — then measured a **0.97x** speedup, i.e. none, because my benchmark passed all 200 texts in
+one `encode()` call and sentence-transformers already sorts internally. Third, the real problem was
+my own batching: calling `encode()` with 16 chunks at a time prevents the library from doing that
+internal sorting across a useful window. Handing it 512 chunks per call is **1.8x** faster, with
+bit-identical embeddings (verified: `max |Δ| = 0.00e+00` between the two orders).
+
+The embeddings being order-independent is what makes the run resumable without caveat: an
+interrupted index can continue in a different order and the vectors are the same.
+
+### Questions an interviewer could ask
+
+**"Why not quantise the model or use a smaller one?"**
+Both would work — int8 dynamic quantisation is typically 2–3x on CPU, and e5-small is ~2.4x — but
+both change the embeddings, and the point of this project is to measure retrieval quality. I would
+rather pay the CPU time once for the baseline and treat quantisation as a separate, measured
+experiment than confound the first number I report.
+
+**"You estimated 20–40 chunks/s and got 1.75. Does that matter?"**
+It changed the plan: it turns re-indexing from a free operation into a multi-hour one, which is why
+the phase-5 chunk-size comparison (1200/150 against 800/100 → 69,896 chunks) has to run on a subset
+rather than the whole corpus. Getting the estimate wrong is cheap; not measuring before committing
+to a design that assumes cheap re-indexing would not have been.
+
+## Phase 4 — the labelling tool
+
+### Decisions
+
+| Decision | Why | Alternative rejected |
+| --- | --- | --- |
+| The labelling search is keyword + IDF, **not** the vector retriever | labelling from the system under test hides exactly the offers it fails to find: the ids I record would be the ids it already returns, and recall@5 would be flattered | reusing `/search` to propose candidates |
+| It reads `data/offers.jsonl`, not the database | the questions can be written while the index is still building, and the tool needs no model | requiring the index |
+| IDF weighting, after measuring the naive version | without it, "Kubernetes à Paris en CDI" ranked any Paris CDI title above the one offer mentioning Kubernetes: two common words in a title beat one rare word in a body | plain term counting |
+| A term given as a filter is removed from the text score | `city:Paris` plus "Paris" in the text scored Paris twice and drowned the content word | leaving the text untouched |
+| The file is rewritten after every question | labelling 100 questions is long and interruptible; losing an hour of work to a Ctrl-C would be unforgivable | saving on exit |
+| Only canonical offers are proposed | a copy is never "the" answer — its canonical row is, and that row carries the other cities | labelling against all 32,013 rows |
+| `type` is guessed and confirmed, never inferred silently | the target mix (30 fact / 25 filter / 15 aggregation / 15 offer / 15 none) only holds if the type is right, and only Amine knows what he meant | automatic classification |
+| "none" questions are a first-class type, validated | the refusal rate of phase 7 needs questions with **no** answer; the schema refuses a "none" question that has relevant ids, and any other type without them | treating them as a comment |

@@ -49,6 +49,7 @@ make data                      # read-only export + corpus statistics + anonymis
 make models                    # CPU-only torch + sentence-transformers (~2 GB, no GPU needed)
 make schema                    # offers/chunks tables, HNSW + French full-text indexes
 make index                     # embed the chunks (resumable)
+make label                     # write and label the evaluation questions (phase 4)
 make test                     # unit tests, no database needed
 make test-all                 # + the tests that need the container
 make api                      # http://127.0.0.1:8010
@@ -243,7 +244,7 @@ citation accuracy._
 | 1 | Read-only export, masking, deduplication, corpus statistics | **done** |
 | 2a | Section-aware chunking with metadata | **done** |
 | 2b | pgvector schema, embeddings, `/search` | next |
-| 4 | 100-question evaluation set, hand-labelled | |
+| 4 | 100-question evaluation set, hand-labelled | tool ready, questions to write |
 | 5 | Retrieval metrics: baseline → hybrid + RRF → + reranker, with latency | |
 | 6 | Generation: numbered sources, mandatory citations, metadata filters | |
 | 7 | Answer evaluation: faithfulness, refusals, citation accuracy | |

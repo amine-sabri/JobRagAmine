@@ -83,7 +83,12 @@ class SentenceTransformerEmbedder:
             if self.threads:
                 torch.set_num_threads(self.threads)
             self._model = SentenceTransformer(self.model_name, device=self.device)
-            self._dimension = self._model.get_sentence_embedding_dimension()
+            # Renamed in sentence-transformers 6; keep both names working.
+            dimension_of = (
+                getattr(self._model, "get_embedding_dimension", None)
+                or self._model.get_sentence_embedding_dimension
+            )
+            self._dimension = dimension_of()
         return self._model
 
     @property
@@ -102,6 +107,7 @@ class SentenceTransformerEmbedder:
             # the database can use the cheaper inner product ordering.
             normalize_embeddings=True,
             convert_to_numpy=True,
+            show_progress_bar=kwargs.pop("show_progress_bar", False),
             **kwargs,
         )
 
