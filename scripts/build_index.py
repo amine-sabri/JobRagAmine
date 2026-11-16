@@ -74,11 +74,39 @@ ON CONFLICT (chunk_id) DO UPDATE SET
 """
 
 
+HNSW_SQL = (
+    "CREATE INDEX chunks_embedding_idx ON chunks "
+    "USING hnsw (embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64)"
+)
+
+
+def rebuild_hnsw(conn) -> None:
+    """(Re)build the vector index, then ANALYZE.
+
+    Kept out of the loading path on purpose: inserting into an existing HNSW
+    index slows every write, so a large load drops it and rebuilds once. When
+    the corpus is loaded in slices, the rebuild belongs after the last one.
+    """
+    started = time.perf_counter()
+    print("hnsw       building index …", flush=True)
+    with conn.cursor() as cur:
+        cur.execute("DROP INDEX IF EXISTS chunks_embedding_idx")
+        cur.execute(HNSW_SQL)
+        cur.execute("ANALYZE chunks")
+    conn.commit()
+    print(f"            built in {(time.perf_counter() - started) / 60:.1f} min")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--chunks", default="data/chunks.jsonl", type=Path)
     parser.add_argument("--offers", default="data/offers.jsonl", type=Path)
-    parser.add_argument("--limit", type=int, default=None, help="only N chunks (for timing)")
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=None,
+        help="embed at most N chunks that still need one, then stop (one slice)",
+    )
     parser.add_argument("--batch-size", type=int, default=16, help="model forward batch")
     parser.add_argument(
         "--window",
@@ -89,9 +117,14 @@ def main() -> int:
     parser.add_argument("--threads", type=int, default=4)
     parser.add_argument("--no-resume", action="store_true", help="re-embed everything")
     parser.add_argument(
-        "--keep-index",
+        "--drop-index",
         action="store_true",
-        help="do not drop/rebuild the HNSW index around a large load",
+        help="drop the HNSW index before a full single-run load, rebuild it at the end",
+    )
+    parser.add_argument(
+        "--rebuild-index",
+        action="store_true",
+        help="rebuild the HNSW index and exit, embedding nothing (run after the last slice)",
     )
     args = parser.parse_args()
 
@@ -102,20 +135,47 @@ def main() -> int:
 
     settings = get_settings()
     print(f"database   {mask_dsn(settings.jobrag_db_dsn)}")
+
+    if args.rebuild_index:
+        with connection() as conn:
+            rebuild_hnsw(conn)
+        return 0
+
     print(f"model      {settings.embedding_model} (cpu, {args.threads} threads)")
 
     with args.chunks.open(encoding="utf-8") as fh:
         chunks = [json.loads(line) for line in fh]
-    if args.limit:
-        chunks = chunks[: args.limit]
-    wanted_offers = {chunk["offer_id"] for chunk in chunks}
-
-    with args.offers.open(encoding="utf-8") as fh:
-        offers = [json.loads(line) for line in fh if json.loads(line)["id"] in wanted_offers]
 
     started = time.perf_counter()
     with connection() as conn:
         with conn.cursor() as cur:
+            if not args.no_resume:
+                cur.execute("SELECT chunk_id FROM chunks WHERE embedding IS NOT NULL")
+                done = {row[0] for row in cur.fetchall()}
+                before = len(chunks)
+                chunks = [chunk for chunk in chunks if chunk["chunk_id"] not in done]
+                if before != len(chunks):
+                    print(f"resume     {before - len(chunks)} of {before} already embedded")
+
+            # --limit counts chunks that still need an embedding, so the same
+            # command can be run slice after slice until the corpus is done.
+            # Chunks keep their file order: a slice then covers a contiguous
+            # stretch of the corpus, which makes progress easy to reason about.
+            if args.limit:
+                chunks = chunks[: args.limit]
+                print(f"slice      {len(chunks)} chunks this run")
+
+            if not chunks:
+                print("nothing to do")
+                return 0
+
+            wanted_offers = {chunk["offer_id"] for chunk in chunks}
+            with args.offers.open(encoding="utf-8") as fh:
+                offers = [
+                    offer
+                    for offer in (json.loads(line) for line in fh)
+                    if offer["id"] in wanted_offers
+                ]
             cur.executemany(
                 UPSERT_OFFER,
                 [{column: offer.get(column) for column in OFFER_COLUMNS} for offer in offers],
@@ -123,30 +183,10 @@ def main() -> int:
             conn.commit()
             print(f"offers     {len(offers)} upserted in {time.perf_counter() - started:.1f}s")
 
-            if not args.no_resume:
-                cur.execute("SELECT chunk_id FROM chunks WHERE embedding IS NOT NULL")
-                done = {row[0] for row in cur.fetchall()}
-                before = len(chunks)
-                chunks = [chunk for chunk in chunks if chunk["chunk_id"] not in done]
-                if before != len(chunks):
-                    print(f"resume     {before - len(chunks)} chunks already embedded, skipping")
-
-            drop_index = not args.keep_index and len(chunks) > 5000
-            if drop_index:
+            if args.drop_index:
                 cur.execute("DROP INDEX IF EXISTS chunks_embedding_idx")
                 conn.commit()
                 print("hnsw       index dropped for the load (rebuilt at the end)")
-
-        if not chunks:
-            print("nothing to do")
-            return 0
-
-        # Sort by length before batching. A batch is padded to its longest
-        # member, so mixing a 57-character chunk with a 1,199-character one
-        # wastes most of the compute on padding tokens. Padding is masked, so
-        # the embeddings are bit-for-bit the ones the unsorted order produces —
-        # only the wasted work disappears.
-        chunks.sort(key=lambda chunk: chunk["n_chars"])
 
         embedder = get_embedder(batch_size=args.batch_size, threads=args.threads)
         load_started = time.perf_counter()
@@ -204,17 +244,9 @@ def main() -> int:
                     flush=True,
                 )
 
+        if args.drop_index:
+            rebuild_hnsw(conn)
         with conn.cursor() as cur:
-            if drop_index:
-                index_started = time.perf_counter()
-                print("hnsw       rebuilding index …", flush=True)
-                cur.execute(
-                    "CREATE INDEX chunks_embedding_idx ON chunks "
-                    "USING hnsw (embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64)"
-                )
-                conn.commit()
-                print(f"            built in {(time.perf_counter() - index_started) / 60:.1f} min")
-            cur.execute("ANALYZE chunks")
             cur.execute("SELECT count(*), count(embedding) FROM chunks")
             rows, embedded = cur.fetchone()
             conn.commit()

@@ -32,8 +32,18 @@ schema: ## Create the offers/chunks tables in the JobRAG database
 	$(PY) scripts/init_db.py
 
 .PHONY: index
-index: ## Embed data/chunks.jsonl into pgvector (resumable)
-	$(PY) scripts/build_index.py
+index: ## Embed data/chunks.jsonl into pgvector (resumable, drops/rebuilds HNSW)
+	$(PY) scripts/build_index.py --drop-index
+
+SLICE ?= 5000
+
+.PHONY: index-slice
+index-slice: ## Embed the next SLICE chunks only (default 5000, ~30 min on CPU)
+	$(PY) scripts/build_index.py --limit $(SLICE)
+
+.PHONY: index-rebuild
+index-rebuild: ## Rebuild the HNSW index after the last slice
+	$(PY) scripts/build_index.py --rebuild-index
 
 .PHONY: lock
 lock: $(VENV)/bin/activate ## Recompile requirements*.txt from requirements*.in
